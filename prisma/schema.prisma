@@ -1,0 +1,447 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  passwordHash   String?
+  phone          String?
+  role           Role     @default(CUSTOMER)
+  image          String?
+  points         Int      @default(0)
+  referralCode   String   @unique
+  referredBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  appointments         Appointment[]
+  orders               Order[]
+  cartItems            CartItem[]
+  wishlistItems        WishlistItem[]
+  reviews              Review[]
+  giftCardsPurchased   GiftCard[] @relation("GiftCardPurchaser")
+  giftCardsReceived    GiftCard[] @relation("GiftCardRecipient")
+  loyaltyTransactions  LoyaltyTransaction[]
+  notifications        Notification[]
+  contactMessages      ContactMessage[]
+
+  @@map("users")
+}
+
+model Stylist {
+  id              String   @id @default(cuid())
+  name            String
+  title           String
+  bio             String
+  image           String
+  yearsExperience Int
+  rating          Float    @default(5.0)
+  reviewCount     Int      @default(0)
+  specialties     String[]
+  featured        Boolean  @default(false)
+  available       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  services     Service[]
+  appointments Appointment[]
+
+  @@map("stylists")
+}
+
+enum Category {
+  HAIR
+  NAILS
+  BEAUTY
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  category        Category
+  description     String
+  image           String
+  price           Float
+  durationMinutes Int
+  popular         Boolean  @default(false)
+  featured        Boolean  @default(false)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  stylists     Stylist[]
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  PAY_AT_SALON
+  CARD
+  PAYFAST
+  STRIPE
+  OZOW
+  YOCO
+}
+
+enum PaymentStatus {
+  UNPAID
+  DEPOSIT_PAID
+  PAID
+  REFUNDED
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  ref         String            @unique
+  userId      String?
+  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  stylistId   String
+  stylist     Stylist           @relation(fields: [stylistId], references: [id])
+  serviceId   String
+  service     Service           @relation(fields: [serviceId], references: [id])
+  start       DateTime
+  end         DateTime
+  status      AppointmentStatus @default(PENDING)
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus   @default(UNPAID)
+  amount      Float
+  depositAmount Float?
+  notes       String?
+  guestName   String?
+  guestEmail  String?
+  guestPhone  String?
+  cancelReason String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([stylistId, start])
+  @@index([start])
+  @@map("appointments")
+}
+
+enum ProductCategory {
+  HAIR_PRODUCTS
+  HAIR_OILS
+  SHAMPOO
+  CONDITIONERS
+  HAIR_EXTENSIONS
+  WIGS
+  MAKEUP
+  SKINCARE
+  ACCESSORIES
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  name           String
+  slug           String          @unique
+  description    String
+  image          String
+  category       ProductCategory
+  price          Float
+  compareAtPrice Float?
+  stock          Int             @default(0)
+  rating         Float           @default(0)
+  reviewCount    Int             @default(0)
+  featured       Boolean         @default(false)
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  wishlistItems WishlistItem[]
+  reviews      Review[]
+
+  @@map("products")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  ref          String      @unique
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status       OrderStatus @default(PENDING)
+  subtotal     Float
+  discount     Float       @default(0)
+  total        Float
+  couponCode   String?
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus @default(UNPAID)
+  fullName     String
+  email        String
+  phone        String?
+  address      String?
+  city         String?
+  postalCode   String?
+  trackingNumber String?
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  price     Float
+
+  @@map("order_items")
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType @default(PERCENT)
+  value       Float
+  minSpend    Float?
+  maxDiscount Float?
+  active      Boolean    @default(true)
+  expiresAt   DateTime?
+  usageLimit  Int?
+  usageCount  Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  @@map("coupons")
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+}
+
+model GiftCard {
+  id              String        @id @default(cuid())
+  code            String        @unique
+  amount          Float
+  balance         Float
+  recipientEmail  String
+  recipientName   String?
+  senderName      String
+  message         String?
+  purchasedById   String?
+  purchasedBy     User?         @relation("GiftCardPurchaser", fields: [purchasedById], references: [id], onDelete: SetNull)
+  recipientUserId String?
+  recipientUser   User?         @relation("GiftCardRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  status          GiftCardStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+
+  @@map("gift_cards")
+}
+
+enum LoyaltyType {
+  EARN
+  REDEEM
+  BONUS
+}
+
+model LoyaltyTransaction {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points      Int
+  type        LoyaltyType
+  description String
+  createdAt   DateTime    @default(now())
+
+  @@map("loyalty_transactions")
+}
+
+enum EntityType {
+  SALON
+  SERVICE
+  PRODUCT
+}
+
+model Review {
+  id         String     @id @default(cuid())
+  userId     String?
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName String
+  rating     Int
+  text       String
+  image      String?
+  entity     EntityType @default(SALON)
+  productId  String?
+  product    Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  approved   Boolean    @default(true)
+  featured   Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+
+  @@map("reviews")
+}
+
+enum GalleryCategory {
+  HAIR
+  NAILS
+  MAKEUP
+  SALON
+  BRIDAL
+  TRANSFORMATIONS
+}
+
+model GalleryImage {
+  id        String          @id @default(cuid())
+  url       String
+  title     String
+  category  GalleryCategory
+  featured  Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@map("gallery_images")
+}
+
+enum BlogCategory {
+  HAIR_TIPS
+  BEAUTY_ADVICE
+  TRENDING_HAIRSTYLES
+  WEDDING_LOOKS
+  PRODUCT_REVIEWS
+  SKIN_CARE
+}
+
+model BlogPost {
+  id          String       @id @default(cuid())
+  title       String
+  slug        String       @unique
+  excerpt     String
+  content     String
+  image       String
+  category    BlogCategory
+  author      String
+  published   Boolean      @default(true)
+  publishedAt DateTime     @default(now())
+  tags        String[]
+
+  @@map("blog_posts")
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    MessageStatus @default(NEW)
+  userId    String?
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime      @default(now())
+
+  @@map("contact_messages")
+}
+
+model OpeningHour {
+  id       Int     @id @default(autoincrement())
+  day      Int     @unique
+  dayName  String
+  open     String
+  close    String
+  closed   Boolean @default(false)
+
+  @@map("opening_hours")
+}
+
+enum NotificationType {
+  APPOINTMENT
+  ORDER
+  LOYALTY
+  PROMO
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(GENERAL)
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}

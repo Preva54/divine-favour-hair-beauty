@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dfhb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dfhb
+      POSTGRES_PASSWORD: dfhb_dev_password
+      POSTGRES_DB: divine_favour
+    ports:
+      - "5433:5432"
+    volumes:
+      - dfhb_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dfhb -d divine_favour"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  dfhb_pgdata:
