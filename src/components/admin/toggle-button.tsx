@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 
 export function ToggleButton({
   on,
+  id,
   onToggle,
   label,
 }: {
   on: boolean;
-  onToggle: () => Promise<{ error?: string; ok?: boolean } | undefined>;
+  id: string;
+  onToggle: (id: string) => Promise<{ error?: string; ok?: boolean } | undefined>;
   label: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -19,7 +21,7 @@ export function ToggleButton({
     <button
       onClick={() =>
         startTransition(async () => {
-          const res = await onToggle();
+          const res = await onToggle(id);
           if (res?.error) toast.error(res.error);
         })
       }

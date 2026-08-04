@@ -58,7 +58,8 @@ export default async function AdminBlogPage() {
                 </div>
                 <ToggleButton
                   on={post.published}
-                  onToggle={() => toggleBlogPublishedAction(post.id)}
+                  id={post.id}
+                  onToggle={toggleBlogPublishedAction}
                   label={post.published ? "Unpublish post" : "Publish post"}
                 />
                 <Link

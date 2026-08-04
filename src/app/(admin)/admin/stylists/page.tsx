@@ -74,14 +74,16 @@ export default async function AdminStylistsPage() {
                     <td className="px-5 py-3.5">
                       <ToggleButton
                         on={st.featured}
-                        onToggle={() => toggleStylistFeaturedAction(st.id)}
+                        id={st.id}
+                        onToggle={toggleStylistFeaturedAction}
                         label={st.featured ? "Unfeature stylist" : "Feature stylist"}
                       />
                     </td>
                     <td className="px-5 py-3.5">
                       <ToggleButton
                         on={st.available}
-                        onToggle={() => toggleStylistAvailableAction(st.id)}
+                        id={st.id}
+                        onToggle={toggleStylistAvailableAction}
                         label={st.available ? "Mark unavailable" : "Mark available"}
                       />
                     </td>

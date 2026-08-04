@@ -68,7 +68,8 @@ export default async function AdminCouponsPage() {
                       <td className="px-5 py-3.5">
                         <ToggleButton
                           on={c.active && !expired}
-                          onToggle={() => toggleCouponActiveAction(c.id)}
+                          id={c.id}
+                          onToggle={toggleCouponActiveAction}
                           label={c.active ? "Deactivate coupon" : "Activate coupon"}
                         />
                       </td>
