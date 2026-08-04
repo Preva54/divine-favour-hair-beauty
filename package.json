@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node .\\node_modules\\next\\dist\\bin\\next dev --turbopack",
-    "build": "node .\\node_modules\\next\\dist\\bin\\next build --turbopack",
-    "start": "node .\\node_modules\\next\\dist\\bin\\next start",
-    "lint": "node .\\node_modules\\eslint\\bin\\eslint.js",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint",
     "db:up": "docker compose up -d",
-    "db:migrate": "node .\\node_modules\\prisma\\build\\index.js migrate dev",
-    "db:seed": "node .\\node_modules\\tsx\\dist\\cli.mjs prisma/seed.ts",
-    "db:studio": "node .\\node_modules\\prisma\\build\\index.js studio",
-    "db:reset": "node .\\node_modules\\prisma\\build\\index.js migrate reset --force"
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
