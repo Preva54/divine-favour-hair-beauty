@@ -33,6 +33,34 @@
   --gold: #d4af37;
 }
 
+.dark {
+  --background: #161110;
+  --foreground: #f5ece7;
+  --card: #1e1614;
+  --card-foreground: #f5ece7;
+  --popover: #1e1614;
+  --popover-foreground: #f5ece7;
+  --primary: #d18994;
+  --primary-foreground: #1a0f10;
+  --secondary: #2a1b18;
+  --secondary-foreground: #ecc8c2;
+  --muted: #241a17;
+  --muted-foreground: #a8948c;
+  --accent: #8d4f5b;
+  --accent-foreground: #f7e6e3;
+  --destructive: #e05d4f;
+  --destructive-foreground: #ffffff;
+  --border: #2e201c;
+  --input: #35231e;
+  --ring: #d18994;
+
+  --charcoal: #e8dbd4;
+  --ivory: #161110;
+  --rose: #d18994;
+  --blush: #8d4f5b;
+  --gold: #e3c25e;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

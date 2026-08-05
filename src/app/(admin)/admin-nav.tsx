@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Package,
   Scissors,
+  ShieldCheck,
   ShoppingBag,
   Star,
   Ticket,
@@ -56,6 +57,7 @@ const SECTIONS: { title?: string; items: NavItem[] }[] = [
     title: "Settings",
     items: [
       { href: "/admin/openings", label: "Opening hours", icon: Clock, permission: "openings:manage" },
+      { href: "/admin/permissions", label: "Role permissions", icon: ShieldCheck, permission: "settings:manage" },
       { href: "/admin/users", label: "Customers & staff", icon: UsersRound, permission: "users:view" },
     ],
   },

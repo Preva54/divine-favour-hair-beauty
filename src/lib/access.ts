@@ -2,19 +2,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Role } from "@/generated/prisma/enums";
+import { STAFF_ROLES } from "@/lib/permissions";
 import type { Permission } from "@/lib/permissions";
-
-const STAFF_ROLES: Role[] = [
-  Role.SUPER_ADMIN,
-  Role.MANAGER,
-  Role.RECEPTIONIST,
-  Role.STYLIST,
-  Role.ACCOUNTANT,
-  Role.INVENTORY_MANAGER,
-  Role.MARKETING_MANAGER,
-  Role.CUSTOMER_SUPPORT,
-];
 
 export async function adminGuard() {
   const session = await auth();

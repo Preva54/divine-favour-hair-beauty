@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { CalendarDays, CircleDollarSign, MessageSquare, Package, ShoppingBag, Star } from "lucide-react";
+import { format, subMonths } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { BookingStatusChart, RevenueTrendChart } from "@/components/admin/dashboard-charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = { title: "Admin Overview" };
@@ -12,6 +14,7 @@ export default async function AdminOverviewPage() {
   await requirePermission("dashboard:view");
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const sixMonthsAgo = subMonths(monthStart, 5);
 
   const [
     revenue,
@@ -23,6 +26,8 @@ export default async function AdminOverviewPage() {
     lowStock,
     recentAppointments,
     recentOrders,
+    monthOrders,
+    monthAppointments,
   ] = await Promise.all([
     prisma.appointment.aggregate({ where: { status: { in: ["COMPLETED", "CONFIRMED"] } }, _sum: { amount: true } }),
     prisma.order.aggregate({ where: { createdAt: { gte: monthStart }, status: { not: "CANCELLED" } }, _sum: { total: true } }),
@@ -37,7 +42,37 @@ export default async function AdminOverviewPage() {
       include: { service: { select: { name: true } }, stylist: { select: { name: true } }, user: { select: { name: true } } },
     }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { user: { select: { name: true } } } }),
+    prisma.order.findMany({ where: { createdAt: { gte: sixMonthsAgo }, status: { not: "CANCELLED" } }, select: { createdAt: true, total: true } }),
+    prisma.appointment.findMany({ where: { start: { gte: sixMonthsAgo } }, select: { start: true, status: true, amount: true } }),
   ]);
+
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = subMonths(monthStart, 5 - i);
+    return { key: d.getTime(), month: format(d, "MMM") };
+  });
+  const revenueByMonth = new Map<number, number>();
+  const bookingsByMonth = new Map<number, number>();
+  for (const o of monthOrders) {
+    const key = new Date(o.createdAt.getFullYear(), o.createdAt.getMonth(), 1).getTime();
+    revenueByMonth.set(key, (revenueByMonth.get(key) ?? 0) + o.total);
+  }
+  for (const a of monthAppointments) {
+    const key = new Date(a.start.getFullYear(), a.start.getMonth(), 1).getTime();
+    bookingsByMonth.set(key, (bookingsByMonth.get(key) ?? 0) + 1);
+  }
+  const trend = months.map((m) => ({
+    month: m.month,
+    revenue: revenueByMonth.get(m.key) ?? 0,
+    bookings: bookingsByMonth.get(m.key) ?? 0,
+  }));
+
+  const statusCounts = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"]
+    .map((status) => ({
+      status,
+      count: monthAppointments.filter((a) => a.status === status).length,
+    }))
+    .filter((d) => d.count > 0);
+  const statusTotal = statusCounts.reduce((s, d) => s + d.count, 0);
 
   const stats = [
     { icon: CircleDollarSign, label: "Lifetime revenue", value: formatZAR(revenue._sum.amount ?? 0), sub: "appointments" },
@@ -72,10 +107,21 @@ export default async function AdminOverviewPage() {
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Recent bookings</CardTitle>
+            <CardTitle>Revenue & bookings — last 6 months</CardTitle>
+            <span className="text-xs text-muted-foreground">{statusTotal} bookings in period</span>
+          </CardHeader>
+          <CardContent>
+            <RevenueTrendChart data={trend} />
+          </CardContent>
+        </Card>
+
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle>Recent bookings</CardTitle>
             <Link href="/admin/bookings" className="text-xs font-semibold text-rose hover:underline">
               View all
             </Link>
@@ -129,6 +175,20 @@ export default async function AdminOverviewPage() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+        </section>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Booking status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {statusCounts.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">No bookings in the last 6 months.</p>
+            ) : (
+              <BookingStatusChart data={statusCounts} />
+            )}
           </CardContent>
         </Card>
       </section>

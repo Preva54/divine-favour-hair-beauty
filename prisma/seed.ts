@@ -16,6 +16,7 @@ import {
   LoyaltyType,
 } from "../src/generated/prisma/enums";
 import { hashSync } from "bcryptjs";
+import { DEFAULT_ROLE_PERMISSIONS } from "../src/lib/permissions";
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
@@ -433,36 +434,7 @@ async function main() {
     await prisma.review.create({ data: { ...r, entity: EntityType.SALON, authorName: r.authorName } });
   }
 
-  const ALL = [
-    "dashboard:view",
-    "bookings:view", "bookings:manage",
-    "orders:view", "orders:manage",
-    "products:view", "products:manage",
-    "services:view", "services:manage",
-    "stylists:view", "stylists:manage",
-    "blog:view", "blog:manage",
-    "gallery:view", "gallery:manage",
-    "reviews:view", "reviews:manage",
-    "coupons:view", "coupons:manage",
-    "giftcards:view", "giftcards:manage",
-    "messages:view", "messages:manage",
-    "users:view", "users:manage",
-    "openings:manage",
-    "settings:manage",
-    "customers:view",
-  ] as const;
-
-  const rolePermissions: Record<Role, readonly string[]> = {
-    [Role.SUPER_ADMIN]: ALL,
-    [Role.MANAGER]: ALL.filter((p) => !["users:manage", "settings:manage"].includes(p)),
-    [Role.RECEPTIONIST]: ["dashboard:view", "bookings:view", "bookings:manage", "customers:view", "messages:view"],
-    [Role.STYLIST]: ["dashboard:view", "bookings:view"],
-    [Role.ACCOUNTANT]: ["dashboard:view", "bookings:view", "orders:view", "products:view"],
-    [Role.INVENTORY_MANAGER]: ["dashboard:view", "products:view", "products:manage", "orders:view"],
-    [Role.MARKETING_MANAGER]: ["dashboard:view", "blog:view", "blog:manage", "gallery:view", "gallery:manage", "coupons:view", "coupons:manage", "giftcards:view", "giftcards:manage", "messages:view"],
-    [Role.CUSTOMER_SUPPORT]: ["dashboard:view", "bookings:view", "messages:view", "messages:manage", "reviews:view", "reviews:manage", "customers:view"],
-    [Role.CUSTOMER]: [],
-  };
+  const rolePermissions = DEFAULT_ROLE_PERMISSIONS;
 
   await prisma.rolePermission.createMany({
     data: (Object.entries(rolePermissions) as [Role, readonly string[]][]).flatMap(([role, perms]) =>

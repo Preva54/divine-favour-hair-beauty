@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { getPermissions } from "@/lib/access";
 import { Logo } from "@/components/logo";
 import { AdminNav } from "./admin-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { CommandPalette } from "@/components/admin/command-palette";
+import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -36,18 +39,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-[74px] items-center justify-between border-b bg-white/80 px-6 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-[74px] items-center justify-between gap-4 border-b bg-card/80 px-6 backdrop-blur">
           <div className="lg:hidden">
             <Logo />
           </div>
           <h1 className="hidden font-serif text-lg font-semibold lg:block">Salon Back Office</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <CommandPalette permissions={permissions} />
+            <ThemeToggle />
             <Button asChild variant="outline" size="sm">
               <Link href="/account">My account</Link>
             </Button>
           </div>
         </header>
-        <main className="p-6 md:p-8">{children}</main>
+        <main className="p-6 md:p-8">
+          <AdminBreadcrumbs />
+          {children}
+        </main>
       </div>
     </div>
   );

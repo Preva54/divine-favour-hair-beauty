@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/components/cart-provider";
 import { WishlistProvider } from "@/components/wishlist-provider";
 import { CartSheet } from "@/components/cart-sheet";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { SALON } from "@/lib/constants";
 
@@ -68,15 +69,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${poppins.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${poppins.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-ivory text-foreground antialiased">
-        <CartProvider>
-          <WishlistProvider>
-            {children}
-            <CartSheet />
-          </WishlistProvider>
-        </CartProvider>
-        <Toaster />
+        <ThemeProvider>
+          <CartProvider>
+            <WishlistProvider>
+              {children}
+              <CartSheet />
+            </WishlistProvider>
+          </CartProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
