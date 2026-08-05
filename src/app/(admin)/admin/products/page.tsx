@@ -3,6 +3,9 @@ import { requirePermission } from "@/lib/access";
 import Image from "next/image";
 import { formatZAR } from "@/lib/utils";
 import { ActiveToggle } from "@/components/admin/active-toggle";
+import { ProductForm } from "@/components/admin/product-form";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteProductAction } from "@/lib/actions/admin-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,11 +17,14 @@ export default async function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl font-semibold">Products</h2>
-        <p className="text-sm text-muted-foreground">
-          {products.filter((p) => p.stock <= 5 && p.active).length} low-stock items need attention.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold">Products</h2>
+          <p className="text-sm text-muted-foreground">
+            {products.filter((p) => p.stock <= 5 && p.active).length} low-stock items need attention.
+          </p>
+        </div>
+        <ProductForm />
       </div>
 
       <Card>
@@ -33,6 +39,7 @@ export default async function AdminProductsPage() {
                   <th className="px-5 py-3.5 font-semibold">Stock</th>
                   <th className="px-5 py-3.5 font-semibold">Rating</th>
                   <th className="px-5 py-3.5 font-semibold">Visible</th>
+                  <th className="px-5 py-3.5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -57,6 +64,26 @@ export default async function AdminProductsPage() {
                     <td className="px-5 py-3.5 text-muted-foreground">{p.rating ? `${p.rating.toFixed(1)} ★` : "—"}</td>
                     <td className="px-5 py-3.5">
                       <ActiveToggle kind="product" id={p.id} active={p.active} label={p.name} />
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <ProductForm
+                          product={{
+                            id: p.id,
+                            name: p.name,
+                            slug: p.slug,
+                            description: p.description,
+                            image: p.image,
+                            category: p.category,
+                            price: p.price,
+                            compareAtPrice: p.compareAtPrice,
+                            stock: p.stock,
+                            featured: p.featured,
+                            active: p.active,
+                          }}
+                        />
+                        <DeleteButton id={p.id} label={p.name} onDelete={deleteProductAction} confirm={`Delete ${p.name}? This cannot be undone.`} />
+                      </div>
                     </td>
                   </tr>
                 ))}

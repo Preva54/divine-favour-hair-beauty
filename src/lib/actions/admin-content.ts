@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { slugify } from "@/lib/utils";
-import { BlogCategory, CouponType, GalleryCategory, Role } from "@/generated/prisma/enums";
+import { BlogCategory, CouponType, GalleryCategory, ProductCategory, Role } from "@/generated/prisma/enums";
 
 type ActionResult = { error?: string; ok?: boolean };
 
@@ -228,6 +228,93 @@ export async function toggleGalleryFeaturedAction(id: string): Promise<ActionRes
   await prisma.galleryImage.update({ where: { id }, data: { featured: !image.featured } });
   revalidatePath("/admin/gallery");
   revalidatePath("/gallery");
+  return { ok: true };
+}
+
+/* ---------------- Products ---------------- */
+
+const PRODUCT_CATEGORIES = Object.values(ProductCategory);
+
+const productSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2, "Name is required"),
+  slug: z.string().optional(),
+  description: z.string().min(10, "Description needs at least 10 characters"),
+  image: z.string().min(1, "Image is required"),
+  category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
+  price: z.coerce.number().positive("Price must be positive"),
+  compareAtPrice: z.coerce.number().min(0).optional(),
+  stock: z.coerce.number().int().min(0).max(9999),
+});
+
+export async function saveProductAction(formData: FormData): Promise<ActionResult> {
+  await requirePermission("products:manage");
+  const parsed = productSchema.safeParse({
+    id: str(formData, "id") || undefined,
+    name: str(formData, "name"),
+    slug: str(formData, "slug"),
+    description: str(formData, "description"),
+    image: str(formData, "image"),
+    category: str(formData, "category"),
+    price: Number(formData.get("price")),
+    compareAtPrice: str(formData, "compareAtPrice") === "" ? undefined : Number(formData.get("compareAtPrice")),
+    stock: number(formData, "stock"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid details" };
+
+  const { id, name, slug, description, image, category, price, compareAtPrice, stock } = parsed.data;
+  const finalSlug = slugify(slug ?? name);
+  if (!finalSlug) return { error: "Slug could not be generated" };
+
+  const data = {
+    name,
+    slug: finalSlug,
+    description,
+    image,
+    category: category as never,
+    price,
+    compareAtPrice,
+    stock,
+    featured: checkbox(formData, "featured"),
+    active: checkbox(formData, "active"),
+  };
+
+  try {
+    if (id) {
+      const existing = await prisma.product.findUnique({ where: { id }, select: { stock: true } });
+      await prisma.product.update({ where: { id }, data });
+      if (existing && stock !== existing.stock) {
+        await prisma.stockMovement.create({
+          data: { productId: id, change: stock - existing.stock, reason: "ADJUSTMENT" },
+        });
+      }
+    } else {
+      const created = await prisma.product.create({ data });
+      if (stock > 0) {
+        await prisma.stockMovement.create({
+          data: { productId: created.id, change: stock, reason: "STOCK_TAKE" },
+        });
+      }
+    }
+  } catch {
+    return { error: "A product with that slug already exists" };
+  }
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/shop");
+  return { ok: true };
+}
+
+export async function deleteProductAction(id: string): Promise<ActionResult> {
+  await requirePermission("products:manage");
+  try {
+    await prisma.product.delete({ where: { id } });
+  } catch {
+    return { error: "Product is on an order and cannot be deleted" };
+  }
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/shop");
   return { ok: true };
 }
 
