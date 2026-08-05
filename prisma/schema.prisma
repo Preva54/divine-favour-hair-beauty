@@ -188,8 +188,21 @@ model Product {
   cartItems    CartItem[]
   wishlistItems WishlistItem[]
   reviews      Review[]
+  stockMovements StockMovement[]
 
   @@map("products")
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  change    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("stock_movements")
 }
 
 enum OrderStatus {

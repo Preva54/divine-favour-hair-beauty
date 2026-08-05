@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Boxes,
   CalendarDays,
   Clock,
   Command,
+  Contact,
+  CreditCard,
   FileText,
   Gift,
   Home,
@@ -28,8 +31,12 @@ import { cn } from "@/lib/utils";
 const COMMANDS: { href: string; label: string; keywords: string; permission: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { href: "/admin", label: "Go to overview", keywords: "dashboard home", permission: "dashboard:view", icon: LayoutDashboard },
   { href: "/admin/bookings", label: "View bookings", keywords: "appointments schedule", permission: "bookings:view", icon: CalendarDays },
+  { href: "/admin/calendar", label: "Open calendar", keywords: "month week agenda schedule", permission: "bookings:view", icon: CalendarDays },
   { href: "/admin/orders", label: "View orders", keywords: "sales checkout", permission: "orders:view", icon: ShoppingBag },
+  { href: "/admin/payments", label: "Payments ledger", keywords: "money paid invoice finance", permission: "payments:view", icon: CreditCard },
   { href: "/admin/products", label: "Manage products", keywords: "shop stock inventory", permission: "products:view", icon: Package },
+  { href: "/admin/inventory", label: "View inventory", keywords: "stock reorder restock", permission: "products:view", icon: Boxes },
+  { href: "/admin/customers", label: "Browse customers", keywords: "clients accounts people", permission: "customers:view", icon: Contact },
   { href: "/admin/services", label: "Manage services", keywords: "menu price", permission: "services:view", icon: Scissors },
   { href: "/admin/stylists", label: "Manage stylists", keywords: "team staff", permission: "stylists:view", icon: UsersRound },
   { href: "/admin/blog", label: "Manage blog posts", keywords: "articles news", permission: "blog:view", icon: FileText },

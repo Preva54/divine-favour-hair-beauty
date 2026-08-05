@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Boxes,
   CalendarDays,
+  CalendarRange,
   Clock,
+  Contact,
+  CreditCard,
   FileText,
   Gift,
   Images,
@@ -28,7 +32,9 @@ const SECTIONS: { title?: string; items: NavItem[] }[] = [
     title: "Sales",
     items: [
       { href: "/admin/bookings", label: "Bookings", icon: CalendarDays, permission: "bookings:view" },
+      { href: "/admin/calendar", label: "Calendar", icon: CalendarRange, permission: "bookings:view" },
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, permission: "orders:view" },
+      { href: "/admin/payments", label: "Payments", icon: CreditCard, permission: "payments:view" },
       { href: "/admin/gift-cards", label: "Gift cards", icon: Gift, permission: "giftcards:view" },
       { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "coupons:view" },
     ],
@@ -37,6 +43,7 @@ const SECTIONS: { title?: string; items: NavItem[] }[] = [
     title: "Catalogue",
     items: [
       { href: "/admin/products", label: "Products", icon: Package, permission: "products:view" },
+      { href: "/admin/inventory", label: "Inventory", icon: Boxes, permission: "products:view" },
       { href: "/admin/services", label: "Services", icon: Scissors, permission: "services:view" },
       { href: "/admin/stylists", label: "Stylists", icon: UsersRound, permission: "stylists:view" },
     ],
@@ -52,6 +59,10 @@ const SECTIONS: { title?: string; items: NavItem[] }[] = [
   {
     title: "Inbox",
     items: [{ href: "/admin/messages", label: "Messages", icon: MessageSquare, permission: "messages:view" }],
+  },
+  {
+    title: "Customers",
+    items: [{ href: "/admin/customers", label: "Customers", icon: Contact, permission: "customers:view" }],
   },
   {
     title: "Settings",
