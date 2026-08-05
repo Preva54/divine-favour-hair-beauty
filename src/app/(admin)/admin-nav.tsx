@@ -19,60 +19,63 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; permission: string };
 
 const SECTIONS: { title?: string; items: NavItem[] }[] = [
-  { items: [{ href: "/admin", label: "Overview", icon: LayoutDashboard }] },
+  { items: [{ href: "/admin", label: "Overview", icon: LayoutDashboard, permission: "dashboard:view" }] },
   {
     title: "Sales",
     items: [
-      { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
-      { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-      { href: "/admin/gift-cards", label: "Gift cards", icon: Gift },
-      { href: "/admin/coupons", label: "Coupons", icon: Ticket },
+      { href: "/admin/bookings", label: "Bookings", icon: CalendarDays, permission: "bookings:view" },
+      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, permission: "orders:view" },
+      { href: "/admin/gift-cards", label: "Gift cards", icon: Gift, permission: "giftcards:view" },
+      { href: "/admin/coupons", label: "Coupons", icon: Ticket, permission: "coupons:view" },
     ],
   },
   {
     title: "Catalogue",
     items: [
-      { href: "/admin/products", label: "Products", icon: Package },
-      { href: "/admin/services", label: "Services", icon: Scissors },
-      { href: "/admin/stylists", label: "Stylists", icon: UsersRound },
+      { href: "/admin/products", label: "Products", icon: Package, permission: "products:view" },
+      { href: "/admin/services", label: "Services", icon: Scissors, permission: "services:view" },
+      { href: "/admin/stylists", label: "Stylists", icon: UsersRound, permission: "stylists:view" },
     ],
   },
   {
     title: "Content",
     items: [
-      { href: "/admin/blog", label: "Blog", icon: FileText },
-      { href: "/admin/gallery", label: "Gallery", icon: Images },
-      { href: "/admin/reviews", label: "Reviews", icon: Star },
+      { href: "/admin/blog", label: "Blog", icon: FileText, permission: "blog:view" },
+      { href: "/admin/gallery", label: "Gallery", icon: Images, permission: "gallery:view" },
+      { href: "/admin/reviews", label: "Reviews", icon: Star, permission: "reviews:view" },
     ],
   },
   {
     title: "Inbox",
-    items: [{ href: "/admin/messages", label: "Messages", icon: MessageSquare }],
+    items: [{ href: "/admin/messages", label: "Messages", icon: MessageSquare, permission: "messages:view" }],
   },
   {
     title: "Settings",
     items: [
-      { href: "/admin/openings", label: "Opening hours", icon: Clock },
-      { href: "/admin/users", label: "Customers & staff", icon: UsersRound },
+      { href: "/admin/openings", label: "Opening hours", icon: Clock, permission: "openings:manage" },
+      { href: "/admin/users", label: "Customers & staff", icon: UsersRound, permission: "users:view" },
     ],
   },
 ];
 
-export function AdminNav({ badges }: { badges: Record<string, number> }) {
+export function AdminNav({ badges, permissions }: { badges: Record<string, number>; permissions: string[] }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
-      {SECTIONS.map((section, i) => (
-        <div key={i}>
-          {section.title && (
-            <p className="mb-1.5 px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">{section.title}</p>
-          )}
-          <div className="space-y-1">
-            {section.items.map((item) => {
+      {SECTIONS.map((section, i) => {
+        const items = section.items.filter((item) => permissions.includes(item.permission));
+        if (items.length === 0) return null;
+        return (
+          <div key={i}>
+            {section.title && (
+              <p className="mb-1.5 px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">{section.title}</p>
+            )}
+            <div className="space-y-1">
+              {items.map((item) => {
               const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
               const badge = badges[item.href] ?? 0;
               return (
@@ -94,9 +97,10 @@ export function AdminNav({ badges }: { badges: Record<string, number> }) {
                 </Link>
               );
             })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 }

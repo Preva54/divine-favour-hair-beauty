@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { OpeningHoursEditor } from "@/components/admin/opening-hours-editor";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Admin · Opening Hours" };
 
 export default async function AdminOpeningsPage() {
-  await adminGuard();
+  await requirePermission("openings:manage");
   const hours = await prisma.openingHour.findMany({ orderBy: { day: "asc" } });
 
   return (

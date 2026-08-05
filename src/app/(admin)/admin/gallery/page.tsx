@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { GalleryManager } from "@/components/admin/gallery-manager";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Admin · Gallery" };
 
 export default async function AdminGalleryPage() {
-  await adminGuard();
+  await requirePermission("gallery:view");
   const images = await prisma.galleryImage.findMany({
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     take: 200,

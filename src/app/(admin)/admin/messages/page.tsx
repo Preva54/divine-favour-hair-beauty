@@ -1,6 +1,6 @@
 import { Mail, Phone } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatusSelect } from "@/components/admin/status-select";
@@ -11,7 +11,7 @@ export const metadata = { title: "Admin · Messages" };
 const OPTIONS = ["NEW", "READ", "REPLIED"] as const;
 
 export default async function AdminMessagesPage() {
-  await adminGuard();
+  await requirePermission("messages:view");
   const messages = await prisma.contactMessage.findMany({ orderBy: [{ status: "desc" }, { createdAt: "desc" }], take: 100 });
 
   return (

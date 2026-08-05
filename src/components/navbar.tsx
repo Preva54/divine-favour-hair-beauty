@@ -113,7 +113,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     <Calendar className="h-4 w-4" /> My Bookings
                   </Link>
                 </DropdownMenuItem>
-                {(user.role === "ADMIN" || user.role === "STAFF") && (
+                {user.role !== "CUSTOMER" && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                       <ShieldCheck className="h-4 w-4" /> Admin Panel

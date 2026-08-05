@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import Image from "next/image";
 import { formatZAR } from "@/lib/utils";
 import { ActiveToggle } from "@/components/admin/active-toggle";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 export const metadata = { title: "Admin · Products" };
 
 export default async function AdminProductsPage() {
-  await adminGuard();
+  await requirePermission("products:view");
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" }, take: 100 });
 
   return (

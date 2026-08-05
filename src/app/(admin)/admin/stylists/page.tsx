@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import {
   deleteStylistAction,
   toggleStylistAvailableAction,
@@ -17,7 +17,7 @@ export const metadata = { title: "Admin · Stylists" };
 const img = (u: string) => (u.startsWith("/") || u.startsWith("http") ? u : `/images/${u}`);
 
 export default async function AdminStylistsPage() {
-  await adminGuard();
+  await requirePermission("stylists:view");
   const stylists = await prisma.stylist.findMany({
     orderBy: [{ featured: "desc" }, { name: "asc" }],
     include: { appointments: { select: { id: true } } },

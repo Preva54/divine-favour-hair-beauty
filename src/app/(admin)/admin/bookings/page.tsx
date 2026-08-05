@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatusSelect } from "@/components/admin/status-select";
@@ -10,7 +10,7 @@ export const metadata = { title: "Admin · Bookings" };
 const OPTIONS = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"] as const;
 
 export default async function AdminBookingsPage() {
-  await adminGuard();
+  await requirePermission("bookings:view");
   const appointments = await prisma.appointment.findMany({
     orderBy: { start: "desc" },
     include: {

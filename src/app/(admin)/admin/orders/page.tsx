@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatusSelect } from "@/components/admin/status-select";
@@ -10,7 +10,7 @@ export const metadata = { title: "Admin · Orders" };
 const OPTIONS = ["PENDING", "PAID", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 
 export default async function AdminOrdersPage() {
-  await adminGuard();
+  await requirePermission("orders:view");
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     include: { items: { include: { product: { select: { name: true } } } } },

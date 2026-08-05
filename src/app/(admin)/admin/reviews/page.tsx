@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate } from "@/lib/utils";
 import { ReviewToggle } from "@/components/admin/review-toggle";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Admin · Reviews" };
 
 export default async function AdminReviewsPage() {
-  await adminGuard();
+  await requirePermission("reviews:view");
   const reviews = await prisma.review.findMany({
     orderBy: [{ approved: "asc" }, { createdAt: "desc" }],
     include: { product: { select: { name: true } } },

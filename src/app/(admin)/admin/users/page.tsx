@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate } from "@/lib/utils";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Admin · Customers" };
 
 export default async function AdminUsersPage() {
-  await adminGuard();
+  await requirePermission("users:view");
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 200,

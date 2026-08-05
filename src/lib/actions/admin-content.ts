@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { slugify } from "@/lib/utils";
 import { BlogCategory, CouponType, GalleryCategory, Role } from "@/generated/prisma/enums";
 
@@ -38,7 +38,7 @@ const stylistSchema = z.object({
 });
 
 export async function saveStylistAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("stylists:manage");
   const parsed = stylistSchema.safeParse({
     id: str(formData, "id") || undefined,
     name: str(formData, "name"),
@@ -79,7 +79,7 @@ export async function saveStylistAction(formData: FormData): Promise<ActionResul
 }
 
 export async function deleteStylistAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("stylists:manage");
   try {
     await prisma.stylist.delete({ where: { id } });
   } catch {
@@ -91,7 +91,7 @@ export async function deleteStylistAction(id: string): Promise<ActionResult> {
 }
 
 export async function toggleStylistFeaturedAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("stylists:manage");
   const stylist = await prisma.stylist.findUnique({ where: { id }, select: { featured: true } });
   if (!stylist) return { error: "Stylist not found" };
   await prisma.stylist.update({ where: { id }, data: { featured: !stylist.featured } });
@@ -101,7 +101,7 @@ export async function toggleStylistFeaturedAction(id: string): Promise<ActionRes
 }
 
 export async function toggleStylistAvailableAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("stylists:manage");
   const stylist = await prisma.stylist.findUnique({ where: { id }, select: { available: true } });
   if (!stylist) return { error: "Stylist not found" };
   await prisma.stylist.update({ where: { id }, data: { available: !stylist.available } });
@@ -125,7 +125,7 @@ const blogSchema = z.object({
 });
 
 export async function saveBlogPostAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("blog:manage");
   const parsed = blogSchema.safeParse({
     id: str(formData, "id") || undefined,
     title: str(formData, "title"),
@@ -173,7 +173,7 @@ export async function saveBlogPostAction(formData: FormData): Promise<ActionResu
 }
 
 export async function deleteBlogPostAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("blog:manage");
   await prisma.blogPost.delete({ where: { id } });
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
@@ -181,7 +181,7 @@ export async function deleteBlogPostAction(id: string): Promise<ActionResult> {
 }
 
 export async function toggleBlogPublishedAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("blog:manage");
   const post = await prisma.blogPost.findUnique({ where: { id }, select: { published: true } });
   if (!post) return { error: "Post not found" };
   await prisma.blogPost.update({ where: { id }, data: { published: !post.published } });
@@ -199,7 +199,7 @@ const gallerySchema = z.object({
 });
 
 export async function saveGalleryImageAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("gallery:manage");
   const parsed = gallerySchema.safeParse({
     url: str(formData, "url"),
     title: str(formData, "title"),
@@ -214,7 +214,7 @@ export async function saveGalleryImageAction(formData: FormData): Promise<Action
 }
 
 export async function deleteGalleryImageAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("gallery:manage");
   await prisma.galleryImage.delete({ where: { id } });
   revalidatePath("/admin/gallery");
   revalidatePath("/gallery");
@@ -222,7 +222,7 @@ export async function deleteGalleryImageAction(id: string): Promise<ActionResult
 }
 
 export async function toggleGalleryFeaturedAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("gallery:manage");
   const image = await prisma.galleryImage.findUnique({ where: { id }, select: { featured: true } });
   if (!image) return { error: "Image not found" };
   await prisma.galleryImage.update({ where: { id }, data: { featured: !image.featured } });
@@ -245,7 +245,7 @@ const couponSchema = z.object({
 });
 
 export async function saveCouponAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("coupons:manage");
   const parsed = couponSchema.safeParse({
     id: str(formData, "id") || undefined,
     code: str(formData, "code").toUpperCase().replace(/\s+/g, ""),
@@ -285,14 +285,14 @@ export async function saveCouponAction(formData: FormData): Promise<ActionResult
 }
 
 export async function deleteCouponAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("coupons:manage");
   await prisma.coupon.delete({ where: { id } });
   revalidatePath("/admin/coupons");
   return { ok: true };
 }
 
 export async function toggleCouponActiveAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("coupons:manage");
   const coupon = await prisma.coupon.findUnique({ where: { id }, select: { active: true } });
   if (!coupon) return { error: "Coupon not found" };
   await prisma.coupon.update({ where: { id }, data: { active: !coupon.active } });
@@ -311,7 +311,7 @@ const giftCardSchema = z.object({
 });
 
 export async function createGiftCardAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("giftcards:manage");
   const parsed = giftCardSchema.safeParse({
     amount: number(formData, "amount"),
     recipientEmail: str(formData, "recipientEmail"),
@@ -328,7 +328,7 @@ export async function createGiftCardAction(formData: FormData): Promise<ActionRe
 }
 
 export async function deleteGiftCardAction(id: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("giftcards:manage");
   await prisma.giftCard.delete({ where: { id } });
   revalidatePath("/admin/gift-cards");
   return { ok: true };
@@ -345,7 +345,7 @@ const openingSchema = z.object({
 });
 
 export async function updateOpeningHourAction(formData: FormData): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("openings:manage");
   const parsed = openingSchema.safeParse({
     id: str(formData, "id"),
     day: str(formData, "day"),
@@ -370,7 +370,7 @@ export async function updateOpeningHourAction(formData: FormData): Promise<Actio
 const ROLE_OPTIONS = ROLES as [string, ...string[]];
 
 export async function updateUserRoleAction(id: string, role: string): Promise<ActionResult> {
-  await adminGuard();
+  await requirePermission("users:manage");
   if (!ROLE_OPTIONS.includes(role)) return { error: "Invalid role" };
   await prisma.user.update({ where: { id }, data: { role: role as never } });
   revalidatePath("/admin/users");

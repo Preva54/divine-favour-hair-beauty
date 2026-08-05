@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, CircleDollarSign, MessageSquare, Package, ShoppingBag, Star } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const metadata = { title: "Admin Overview" };
 
 export default async function AdminOverviewPage() {
-  await adminGuard();
+  await requirePermission("dashboard:view");
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { getPermissions } from "@/lib/access";
 import { Logo } from "@/components/logo";
 import { AdminNav } from "./admin-nav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await adminGuard();
+  const permissions = await getPermissions();
 
   const [newMessages, unapprovedReviews, pendingBookings] = await Promise.all([
     prisma.contactMessage.count({ where: { status: "NEW" } }),
@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex h-[74px] items-center px-6">
           <Logo dark className="scale-90" />
         </div>
-        <AdminNav badges={badges} />
+        <AdminNav badges={badges} permissions={permissions} />
         <div className="p-5">
           <Link href="/" className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Back to site

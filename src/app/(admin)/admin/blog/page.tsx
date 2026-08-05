@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate } from "@/lib/utils";
 import { BLOG_CATEGORY_LABELS } from "@/lib/constants";
 import { deleteBlogPostAction, toggleBlogPublishedAction } from "@/lib/actions/admin-content";
@@ -16,7 +16,7 @@ export const metadata = { title: "Admin · Blog" };
 const img = (u: string) => (u.startsWith("/") || u.startsWith("http") ? u : `/images/${u}`);
 
 export default async function AdminBlogPage() {
-  await adminGuard();
+  await requirePermission("blog:view");
   const posts = await prisma.blogPost.findMany({
     orderBy: [{ published: "asc" }, { publishedAt: "desc" }],
     take: 100,

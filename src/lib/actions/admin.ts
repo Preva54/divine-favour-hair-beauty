@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 
 const APPOINTMENT_STATUSES = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"] as const;
 const ORDER_STATUSES = ["PENDING", "PAID", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 const MESSAGE_STATUSES = ["NEW", "READ", "REPLIED"] as const;
 
 export async function updateAppointmentStatusAction(formData: FormData) {
-  const session = await adminGuard();
+  const session = await requirePermission("bookings:manage");
   if (!session) return { error: "Unauthorized" };
 
   const id = String(formData.get("id") ?? "");
@@ -22,7 +22,7 @@ export async function updateAppointmentStatusAction(formData: FormData) {
 }
 
 export async function updateOrderStatusAction(formData: FormData) {
-  const session = await adminGuard();
+  const session = await requirePermission("orders:manage");
   if (!session) return { error: "Unauthorized" };
 
   const id = String(formData.get("id") ?? "");
@@ -35,7 +35,7 @@ export async function updateOrderStatusAction(formData: FormData) {
 }
 
 export async function updateMessageStatusAction(formData: FormData) {
-  const session = await adminGuard();
+  const session = await requirePermission("messages:manage");
   if (!session) return { error: "Unauthorized" };
 
   const id = String(formData.get("id") ?? "");
@@ -48,7 +48,7 @@ export async function updateMessageStatusAction(formData: FormData) {
 }
 
 export async function toggleReviewApproveAction(id: string) {
-  const session = await adminGuard();
+  const session = await requirePermission("reviews:manage");
   if (!session) return { error: "Unauthorized" };
 
   const review = await prisma.review.findUnique({ where: { id }, select: { approved: true } });
@@ -60,7 +60,7 @@ export async function toggleReviewApproveAction(id: string) {
 }
 
 export async function toggleProductActiveAction(id: string) {
-  const session = await adminGuard();
+  const session = await requirePermission("products:manage");
   if (!session) return { error: "Unauthorized" };
 
   const product = await prisma.product.findUnique({ where: { id }, select: { active: true } });
@@ -72,7 +72,7 @@ export async function toggleProductActiveAction(id: string) {
 }
 
 export async function toggleServiceActiveAction(id: string) {
-  const session = await adminGuard();
+  const session = await requirePermission("services:manage");
   if (!session) return { error: "Unauthorized" };
 
   const service = await prisma.service.findUnique({ where: { id }, select: { active: true } });

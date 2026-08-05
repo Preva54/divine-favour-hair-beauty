@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatZAR } from "@/lib/utils";
 import { ActiveToggle } from "@/components/admin/active-toggle";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Admin · Services" };
 
 export default async function AdminServicesPage() {
-  await adminGuard();
+  await requirePermission("services:view");
   const services = await prisma.service.findMany({ orderBy: [{ category: "asc" }, { price: "asc" }] });
 
   return (

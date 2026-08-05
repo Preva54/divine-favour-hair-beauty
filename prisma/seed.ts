@@ -144,8 +144,10 @@ const hoursDefs = [
 
 async function main() {
   console.log("Seeding Divine Favour Hair & Beauty...");
-
   await prisma.openingHour.deleteMany();
+
+  await prisma.rolePermission.deleteMany();
+
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.contactMessage.deleteMany();
@@ -235,7 +237,7 @@ async function main() {
       email: "admin@divinefavour.co.za",
       passwordHash: hashSync("admin1234", 10),
       phone: "+27 82 555 0100",
-      role: Role.ADMIN,
+      role: Role.SUPER_ADMIN,
       referralCode: "DF-ADMIN",
     },
   });
@@ -271,7 +273,7 @@ async function main() {
       name: "Reception Team",
       email: "staff@divinefavour.co.za",
       passwordHash: hashSync("staff1234", 10),
-      role: Role.STAFF,
+      role: Role.RECEPTIONIST,
       referralCode: "DF-STAFF",
     },
   });
@@ -430,6 +432,43 @@ async function main() {
   for (const r of reviewDefs) {
     await prisma.review.create({ data: { ...r, entity: EntityType.SALON, authorName: r.authorName } });
   }
+
+  const ALL = [
+    "dashboard:view",
+    "bookings:view", "bookings:manage",
+    "orders:view", "orders:manage",
+    "products:view", "products:manage",
+    "services:view", "services:manage",
+    "stylists:view", "stylists:manage",
+    "blog:view", "blog:manage",
+    "gallery:view", "gallery:manage",
+    "reviews:view", "reviews:manage",
+    "coupons:view", "coupons:manage",
+    "giftcards:view", "giftcards:manage",
+    "messages:view", "messages:manage",
+    "users:view", "users:manage",
+    "openings:manage",
+    "settings:manage",
+    "customers:view",
+  ] as const;
+
+  const rolePermissions: Record<Role, readonly string[]> = {
+    [Role.SUPER_ADMIN]: ALL,
+    [Role.MANAGER]: ALL.filter((p) => !["users:manage", "settings:manage"].includes(p)),
+    [Role.RECEPTIONIST]: ["dashboard:view", "bookings:view", "bookings:manage", "customers:view", "messages:view"],
+    [Role.STYLIST]: ["dashboard:view", "bookings:view"],
+    [Role.ACCOUNTANT]: ["dashboard:view", "bookings:view", "orders:view", "products:view"],
+    [Role.INVENTORY_MANAGER]: ["dashboard:view", "products:view", "products:manage", "orders:view"],
+    [Role.MARKETING_MANAGER]: ["dashboard:view", "blog:view", "blog:manage", "gallery:view", "gallery:manage", "coupons:view", "coupons:manage", "giftcards:view", "giftcards:manage", "messages:view"],
+    [Role.CUSTOMER_SUPPORT]: ["dashboard:view", "bookings:view", "messages:view", "messages:manage", "reviews:view", "reviews:manage", "customers:view"],
+    [Role.CUSTOMER]: [],
+  };
+
+  await prisma.rolePermission.createMany({
+    data: (Object.entries(rolePermissions) as [Role, readonly string[]][]).flatMap(([role, perms]) =>
+      perms.map((permission) => ({ role, permission }))
+    ),
+  });
 
   console.log("Seed complete!");
   console.log("  Admin:  admin@divinefavour.co.za / admin1234");

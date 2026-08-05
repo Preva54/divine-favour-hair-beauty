@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateUserRoleAction } from "@/lib/actions/admin-content";
 
-const ROLES = ["CUSTOMER", "STAFF", "ADMIN"] as const;
+const ROLES = ["CUSTOMER", "SUPER_ADMIN", "MANAGER", "RECEPTIONIST", "STYLIST", "ACCOUNTANT", "INVENTORY_MANAGER", "MARKETING_MANAGER", "CUSTOMER_SUPPORT"] as const;
 
 export function UserRoleSelect({ userId, role, disabled }: { userId: string; role: string; disabled?: boolean }) {
   const [pending, startTransition] = useTransition();

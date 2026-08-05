@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { deleteGiftCardAction } from "@/lib/actions/admin-content";
 import { DeleteButton } from "@/components/admin/delete-button";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Admin · Gift Cards" };
 
 export default async function AdminGiftCardsPage() {
-  await adminGuard();
+  await requirePermission("giftcards:view");
   const cards = await prisma.giftCard.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { adminGuard } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 import { formatDate, formatZAR } from "@/lib/utils";
 import { deleteCouponAction, toggleCouponActiveAction } from "@/lib/actions/admin-content";
 import { ToggleButton } from "@/components/admin/toggle-button";
@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Admin · Coupons" };
 
 export default async function AdminCouponsPage() {
-  await adminGuard();
+  await requirePermission("coupons:view");
   const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" }, take: 100 });
 
   return (
