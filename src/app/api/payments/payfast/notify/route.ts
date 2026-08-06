@@ -11,13 +11,29 @@ export const dynamic = "force-dynamic";
 
 const REQUIRED_KEYS = ["m_payment_id", "amount", "signature", "payment_status"];
 
-export async function POST() {
-  return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
+type ITNParams = Record<string, string>;
+
+export async function POST(request: NextRequest) {
+  const params: ITNParams = {};
+  const form = await request.formData();
+  for (const [key, value] of form.entries()) {
+    params[key] = String(value);
+  }
+  if (Object.keys(params).length === 0) {
+    return new NextResponse("EMPTY", { status: 400 });
+  }
+  return processITN(params);
 }
 
 export async function GET(request: NextRequest) {
-  const params = Object.fromEntries(request.nextUrl.searchParams.entries());
+  const params: ITNParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+  if (Object.keys(params).length === 0) {
+    return new NextResponse("EMPTY", { status: 400 });
+  }
+  return processITN(params);
+}
 
+async function processITN(params: ITNParams) {
   if (!verifyPayfastSignature(params)) {
     return new NextResponse("INVALID SIGNATURE", { status: 400 });
   }
