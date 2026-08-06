@@ -8,6 +8,7 @@ import type { Session } from "next-auth";
 import { useCart } from "@/components/cart-provider";
 import { useWishlist } from "@/components/wishlist-provider";
 import { Logo } from "@/components/logo";
+import { signOutAction } from "@/lib/auth-actions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,7 +122,7 @@ export function Navbar({ session }: { session: Session | null }) {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <form action="/api/auth/signout" method="post">
+                <form action={signOutAction}>
                   <button type="submit" className="w-full">
                     <DropdownMenuItem className="text-destructive">
                       <LogOut className="h-4 w-4" /> Sign out

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { signOutAction } from "@/lib/auth-actions";
 import { prisma } from "@/lib/db";
 import { AccountNav } from "./account-nav";
 
@@ -44,13 +45,7 @@ export default async function AccountLayout({ children }: Readonly<{ children: R
       <div className="container-lux grid gap-8 py-10 lg:grid-cols-[240px_1fr]">
         <aside className="h-fit rounded-3xl border bg-white p-3 shadow-soft lg:sticky lg:top-24">
           <AccountNav unread={unread} />
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-            className="mt-2 border-t pt-2"
-          >
+          <form action={signOutAction} className="mt-2 border-t pt-2">
             <button
               type="submit"
               className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-rose/10 hover:text-rose"
