@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminInventoryPage() {
   await requirePermission("products:view");
 
-  const [products, movements, lowCount, outCount] = await Promise.all([
+  const [products, movements] = await Promise.all([
     prisma.product.findMany({
       where: { active: true },
       select: {
@@ -21,6 +21,9 @@ export default async function AdminInventoryPage() {
         image: true,
         category: true,
         price: true,
+        costPrice: true,
+        supplier: true,
+        minStock: true,
         stock: true,
         _count: { select: { stockMovements: true } },
       },
@@ -31,25 +34,28 @@ export default async function AdminInventoryPage() {
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-    prisma.product.count({ where: { active: true, stock: { gt: 0, lte: 5 } } }),
-    prisma.product.count({ where: { active: true, stock: 0 } }),
   ]);
 
+  const lowCount = products.filter((p) => p.stock > 0 && p.stock <= (p.minStock ?? 5)).length;
+  const outCount = products.filter((p) => p.stock === 0).length;
   const totalUnits = products.reduce((sum, p) => sum + p.stock, 0);
   const totalValue = products.reduce((sum, p) => sum + p.stock * p.price, 0);
+  const totalCost = products.reduce((sum, p) => sum + p.stock * (p.costPrice ?? 0), 0);
 
   const stats = [
     { icon: Boxes, label: "Active products", value: products.length.toString(), sub: "SKUs" },
     { icon: PackageX, label: "Out of stock", value: outCount.toString(), sub: "need reorder", warn: outCount > 0 },
-    { icon: AlertTriangle, label: "Low stock", value: lowCount.toString(), sub: "≤ 5 units", warn: lowCount > 0 },
-    { icon: CheckCircle2, label: "Stock value", value: formatZAR(totalValue), sub: `${totalUnits} units` },
+    { icon: AlertTriangle, label: "Low stock", value: lowCount.toString(), sub: "below reorder level", warn: lowCount > 0 },
+    { icon: CheckCircle2, label: "Stock value", value: formatZAR(totalValue), sub: `${totalUnits} units · cost ${formatZAR(totalCost)}` },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-serif text-2xl font-semibold">Inventory</h2>
-        <p className="text-sm text-muted-foreground">Stock levels, reorders and movement history.</p>
+        <p className="text-sm text-muted-foreground">
+          Stock levels, supplier pricing and reorder alerts. Restock below a product&apos;s reorder level (default 5).
+        </p>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -62,7 +68,7 @@ export default async function AdminInventoryPage() {
               <div className="min-w-0">
                 <p className="truncate text-xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
                 <p className="font-serif text-2xl font-bold">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.sub}</p>
+                <p className="truncate text-xs text-muted-foreground">{s.sub}</p>
               </div>
             </CardContent>
           </Card>

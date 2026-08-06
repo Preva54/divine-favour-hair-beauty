@@ -64,32 +64,45 @@ export default async function ContactPage() {
                   <Phone className="mt-0.5 h-5 w-5 shrink-0 text-rose" />
                   <span>
                     <span className="block font-semibold">Call us</span>
-                    <a href={`tel:${SALON.phone.replace(/\s/g, "")}`} className="text-muted-foreground hover:text-rose">
-                      {SALON.phone}
-                    </a>
+                    <span className="flex flex-col gap-0.5">
+                      {SALON.phones.map((p) => (
+                        <a key={p} href={`tel:${p.replace(/\s/g, "")}`} className="text-muted-foreground hover:text-rose">
+                          {p}
+                        </a>
+                      ))}
+                    </span>
                   </span>
                 </li>
                 <li className="flex gap-3">
                   <Mail className="mt-0.5 h-5 w-5 shrink-0 text-rose" />
                   <span>
                     <span className="block font-semibold">Email</span>
-                    <a href={`mailto:${SALON.email}`} className="text-muted-foreground hover:text-rose">
-                      {SALON.email}
-                    </a>
+                    <span className="flex flex-col gap-0.5">
+                      {SALON.emails.map((e) => (
+                        <a key={e} href={`mailto:${e}`} className="text-muted-foreground hover:text-rose">
+                          {e}
+                        </a>
+                      ))}
+                    </span>
                   </span>
                 </li>
                 <li className="flex gap-3">
                   <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose" />
                   <span>
                     <span className="block font-semibold">WhatsApp</span>
-                    <a
-                      href={`https://wa.me/${SALON.whatsapp}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-muted-foreground hover:text-rose"
-                    >
-                      Chat with us
-                    </a>
+                    <span className="flex flex-col gap-0.5">
+                      {SALON.whatsapps.map((w) => (
+                        <a
+                          key={w}
+                          href={`https://wa.me/27${w.replace(/\D/g, "").replace(/^27/, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-muted-foreground hover:text-rose"
+                        >
+                          {w}
+                        </a>
+                      ))}
+                    </span>
                   </span>
                 </li>
               </ul>

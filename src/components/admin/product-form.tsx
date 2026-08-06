@@ -28,6 +28,9 @@ export type ProductFormData = {
   category: string;
   price: number;
   compareAtPrice: number | null;
+  costPrice: number | null;
+  supplier: string | null;
+  minStock: number | null;
   stock: number;
   featured: boolean;
   active: boolean;
@@ -136,8 +139,23 @@ export function ProductForm({ product }: { product?: ProductFormData }) {
               <Input id="p-price" name="price" type="number" min={0.01} step={0.01} required defaultValue={product?.price ?? 0} />
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="p-cost">Cost price (ZAR)</Label>
+              <Input id="p-cost" name="costPrice" type="number" min={0} step={0.01} defaultValue={product?.costPrice ?? ""} placeholder="Optional" />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="p-compare">Compare-at price</Label>
               <Input id="p-compare" name="compareAtPrice" type="number" min={0} step={0.01} defaultValue={product?.compareAtPrice ?? ""} placeholder="Optional" />
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2">
+              <Label htmlFor="p-supplier">Supplier</Label>
+              <Input id="p-supplier" name="supplier" defaultValue={product?.supplier ?? ""} placeholder="e.g. Africa Hair World" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="p-minstock">Reorder at</Label>
+              <Input id="p-minstock" name="minStock" type="number" min={0} max={9999} defaultValue={product?.minStock ?? 5} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="p-stock">Stock</Label>

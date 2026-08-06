@@ -70,12 +70,57 @@ model Stylist {
   specialties     String[]
   featured        Boolean  @default(false)
   available       Boolean  @default(true)
+  phone           String?
+  email           String?
+  commissionRate  Float    @default(0)
   createdAt       DateTime @default(now())
 
   services     Service[]
   appointments Appointment[]
+  schedule     StylistSchedule[]
+  leave        StylistLeave[]
+  blockedPeriods BlockedPeriod[]
 
   @@map("stylists")
+}
+
+model StylistSchedule {
+  id        String  @id @default(cuid())
+  stylistId String
+  stylist   Stylist @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  day       Int
+  open      String
+  close     String
+  closed    Boolean @default(false)
+
+  @@unique([stylistId, day])
+  @@map("stylist_schedules")
+}
+
+model StylistLeave {
+  id        String   @id @default(cuid())
+  stylistId String
+  stylist   Stylist  @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  start     DateTime
+  end       DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([stylistId, start])
+  @@map("stylist_leave")
+}
+
+model BlockedPeriod {
+  id        String    @id @default(cuid())
+  stylistId String?
+  stylist   Stylist?  @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  start     DateTime
+  end       DateTime
+  reason    String
+  createdAt DateTime  @default(now())
+
+  @@index([stylistId, start])
+  @@map("blocked_periods")
 }
 
 enum Category {
@@ -178,6 +223,9 @@ model Product {
   category       ProductCategory
   price          Float
   compareAtPrice Float?
+  costPrice      Float?
+  supplier       String?
+  minStock       Int             @default(5)
   stock          Int             @default(0)
   rating         Float           @default(0)
   reviewCount    Int             @default(0)

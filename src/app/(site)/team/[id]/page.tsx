@@ -112,7 +112,7 @@ export default async function StylistDetailPage({ params }: { params: Promise<{ 
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button asChild size="lg" variant="dark">
-              <Link href={`/booking?service=${stylist.services[0]?.slug ?? ""}`}>Book with {stylist.name.split(" ")[0]}</Link>
+              <Link href={`/booking?service=${stylist.services[0]?.slug ?? ""}&stylist=${stylist.id}`}>Book with {stylist.name.split(" ")[0]}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/booking">
@@ -133,7 +133,7 @@ export default async function StylistDetailPage({ params }: { params: Promise<{ 
               {stylist.services.slice(0, 6).map((s) => (
                 <StaggerItem key={s.id}>
                   <Link
-                    href={`/booking?service=${s.slug}`}
+                    href={`/booking?service=${s.slug}&stylist=${stylist.id}`}
                     className="flex h-full flex-col rounded-2xl border border-border/70 bg-white p-6 transition hover:-translate-y-1 hover:border-rose/40 hover:shadow-soft"
                   >
                     <Badge variant="outline" className="mb-3 self-start">

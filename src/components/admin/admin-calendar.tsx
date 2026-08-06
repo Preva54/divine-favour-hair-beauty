@@ -18,6 +18,14 @@ type CalendarAppointment = {
   serviceName: string;
 };
 
+type CalendarBlocked = {
+  id: string;
+  start: string;
+  end: string;
+  reason: string | null;
+  stylistName: string | null;
+};
+
 const STATUS_STYLES: Record<string, { dot: string; chip: string }> = {
   PENDING: { dot: "bg-gold", chip: "bg-gold/15 text-gold" },
   CONFIRMED: { dot: "bg-blush", chip: "bg-blush/20 text-rose" },
@@ -33,11 +41,13 @@ export function AdminCalendar({
   stylists,
   month,
   activeStylist,
+  blocked = [],
 }: {
   appointments: CalendarAppointment[];
   stylists: { id: string; name: string }[];
   month: string;
   activeStylist: string;
+  blocked?: CalendarBlocked[];
 }) {
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -66,6 +76,16 @@ export function AdminCalendar({
   const nextMonth = format(addMonths(base, 1), "yyyy-MM");
 
   const stylistQuery = () => (activeStylist ? `&s=${encodeURIComponent(activeStylist)}` : "");
+
+  const isBlocked = (key: string) => {
+    const t = new Date(`${key}T12:00:00`);
+    return blocked.some((b) => t >= new Date(b.start) && t < new Date(b.end));
+  };
+
+  const blockedOn = (key: string) => {
+    const t = new Date(`${key}T12:00:00`);
+    return blocked.filter((b) => t >= new Date(b.start) && t < new Date(b.end));
+  };
 
   return (
     <div className="space-y-5">
@@ -133,17 +153,23 @@ export function AdminCalendar({
             const list = byDay.get(key) ?? [];
             const inMonth = isSameMonth(day, base);
             const isToday = isSameDay(day, new Date());
+            const blockedDay = isBlocked(key);
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => setSelected(selected === key ? null : key)}
                 className={cn(
-                  "flex min-h-24 flex-col gap-1 border-b border-r p-1.5 text-left transition last:border-r-0",
+                  "relative flex min-h-24 flex-col gap-1 border-b border-r p-1.5 text-left transition last:border-r-0",
                   !inMonth && "bg-muted/30",
-                  selected === key && "bg-rose/10 ring-1 ring-inset ring-rose"
+                  blockedDay && !inMonth && "bg-rose/5",
+                  blockedDay && "bg-rose/10",
+                  selected === key && "ring-1 ring-inset ring-rose"
                 )}
               >
+                {blockedDay && (
+                  <span className="pointer-events-none absolute inset-x-0 top-1/2 h-px -rotate-6 bg-rose/40" />
+                )}
                 <span
                   className={cn(
                     "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
@@ -153,6 +179,9 @@ export function AdminCalendar({
                   {format(day, "d")}
                 </span>
                 <div className="space-y-1">
+                  {blockedDay && (
+                    <span className="truncate text-[10px] font-semibold text-rose">Blocked</span>
+                  )}
                   {list.slice(0, 3).map((a) => (
                     <div key={a.id} className="flex items-center gap-1 truncate">
                       <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_STYLES[a.status]?.dot ?? "bg-muted")} />
@@ -181,6 +210,16 @@ export function AdminCalendar({
             {selected ? `${selectedAppointments.length} appointment(s)` : "Click any date to see appointments"}
           </span>
         </div>
+        {selected && blockedOn(selected).length > 0 && (
+          <div className="mb-3 space-y-1 rounded-xl border border-rose/20 bg-rose/10 p-3">
+            {blockedOn(selected).map((b) => (
+              <p key={b.id} className="text-xs font-medium text-rose">
+                Blocked: {b.reason ?? "Unavailable"} · {b.stylistName ?? "Whole salon"}
+                {!b.reason && !b.stylistName && " (no reason given)"}
+              </p>
+            ))}
+          </div>
+        )}
         {selectedAppointments.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             {selected ? "No appointments this day." : "Pick a day on the calendar to view its appointments."}

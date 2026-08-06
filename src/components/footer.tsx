@@ -128,9 +128,13 @@ export function Footer() {
               </li>
               <li className="flex gap-3">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-rose" />
-                <a href={`tel:${SALON.phone.replace(/\s/g, "")}`} className="transition hover:text-rose">
-                  {SALON.phone}
-                </a>
+                <span className="flex flex-col gap-0.5">
+                  {SALON.phones.map((p) => (
+                    <a key={p} href={`tel:${p.replace(/\s/g, "")}`} className="transition hover:text-rose">
+                      {p}
+                    </a>
+                  ))}
+                </span>
               </li>
               <li className="flex gap-3">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-rose" />

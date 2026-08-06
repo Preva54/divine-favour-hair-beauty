@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { AdminCalendar } from "@/components/admin/admin-calendar";
+import { BlockedPeriodDialog, type BlockedRange } from "@/components/admin/blocked-period-dialog";
 
 export const metadata = { title: "Calendar" };
 
@@ -16,7 +17,7 @@ export default async function AdminCalendarPage({ searchParams }: { searchParams
   const start = new Date(year, monthIndex - 1, 1);
   const end = new Date(year, monthIndex, 1);
 
-  const [stylists, appointments] = await Promise.all([
+  const [stylists, appointments, blockedRows, leaveRows] = await Promise.all([
     prisma.stylist.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.appointment.findMany({
       where: { start: { gte: start, lt: end }, ...(s ? { stylistId: s } : {}) },
@@ -35,6 +36,34 @@ export default async function AdminCalendarPage({ searchParams }: { searchParams
       },
       orderBy: { start: "asc" },
     }),
+    prisma.blockedPeriod.findMany({
+      where: {
+        start: { lt: end },
+        end: { gte: start },
+        OR: [{ stylistId: null }, ...(s ? [{ stylistId: s }] : [])],
+      },
+      select: {
+        id: true,
+        start: true,
+        end: true,
+        reason: true,
+        stylistId: true,
+        stylist: { select: { name: true } },
+      },
+      orderBy: { start: "asc" },
+    }),
+    prisma.stylistLeave.findMany({
+      where: { start: { lt: end }, end: { gte: start }, ...(s ? { stylistId: s } : {}) },
+      select: {
+        id: true,
+        stylistId: true,
+        start: true,
+        end: true,
+        reason: true,
+        stylist: { select: { name: true } },
+      },
+      orderBy: { start: "asc" },
+    }),
   ]);
 
   const serialized = appointments.map((a) => ({
@@ -50,15 +79,43 @@ export default async function AdminCalendarPage({ searchParams }: { searchParams
     stylistName: a.stylist.name,
   }));
 
-  const activeStylist = s ?? "";
+  const blocked: BlockedRange[] = blockedRows.map((b) => ({
+    id: b.id,
+    start: b.start,
+    end: b.end,
+    reason: b.reason,
+    stylistId: b.stylistId,
+    stylistName: b.stylist?.name ?? null,
+  }));
+
+  const gridBlocked = [
+    ...blocked,
+    ...leaveRows.map((l) => ({
+      id: `leave-${l.id}`,
+      start: l.start,
+      end: l.end,
+      reason: l.reason ? `Leave: ${l.reason}` : "Leave",
+      stylistId: l.stylistId,
+      stylistName: l.stylist.name,
+    })),
+  ].map((b) => ({ id: b.id, start: b.start.toISOString(), end: b.end.toISOString(), reason: b.reason, stylistName: b.stylistName }));
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl font-semibold">Calendar</h2>
-        <p className="text-sm text-muted-foreground">Appointments for {format(new Date(year, monthIndex - 1, 1), "MMMM yyyy")}.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold">Calendar</h2>
+          <p className="text-sm text-muted-foreground">Appointments for {format(new Date(year, monthIndex - 1, 1), "MMMM yyyy")}.</p>
+        </div>
+        <BlockedPeriodDialog stylists={stylists} blocked={blocked} defaultStylistId={s} />
       </div>
-      <AdminCalendar appointments={serialized} stylists={stylists} month={month} activeStylist={activeStylist} />
+      <AdminCalendar
+        appointments={serialized}
+        stylists={stylists}
+        month={month}
+        activeStylist={s ?? ""}
+        blocked={gridBlocked}
+      />
     </div>
   );
 }

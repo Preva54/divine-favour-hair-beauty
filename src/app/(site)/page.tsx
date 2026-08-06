@@ -20,7 +20,11 @@ export const revalidate = 300;
 export default async function HomePage() {
   const [services, stylists, gallery, reviews, posts] = await Promise.all([
     prisma.service.findMany({ where: { active: true, featured: true }, take: 8 }),
-    prisma.stylist.findMany({ where: { featured: true }, take: 4 }),
+    prisma.stylist.findMany({
+      where: { featured: true },
+      take: 4,
+      include: { services: { take: 1, select: { slug: true } } },
+    }),
     prisma.galleryImage.findMany({ take: 8, orderBy: { createdAt: "desc" } }),
     prisma.review.findMany({ where: { approved: true, featured: true }, take: 6 }),
     prisma.blogPost.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3 }),
@@ -67,7 +71,7 @@ export default async function HomePage() {
           <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {stylists.map((st) => (
               <StaggerItem key={st.id}>
-                <StylistCard stylist={st} />
+                <StylistCard stylist={st} firstServiceSlug={st.services[0]?.slug} />
               </StaggerItem>
             ))}
           </Stagger>

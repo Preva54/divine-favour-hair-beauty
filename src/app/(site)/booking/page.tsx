@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function BookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ service?: string; n?: string }>;
+  searchParams: Promise<{ service?: string; n?: string; stylist?: string }>;
 }) {
   const [sp, session] = await Promise.all([searchParams, auth()]);
 
@@ -29,6 +29,10 @@ export default async function BookingPage({
 
   const initialService = sp.service
     ? services.find((s) => s.slug === sp.service)
+    : undefined;
+
+  const initialStylist = sp.stylist
+    ? stylists.find((st) => st.id === sp.stylist)
     : undefined;
 
   const wizardServices: WizardService[] = services.map((s) => ({
@@ -93,6 +97,7 @@ export default async function BookingPage({
             services={wizardServices}
             stylists={wizardStylists}
             initialServiceId={initialService?.id}
+            initialStylistId={initialStylist?.id}
             initialName={session?.user?.name ?? undefined}
             initialEmail={session?.user?.email ?? undefined}
             initialPhone={session?.user?.phone ?? undefined}

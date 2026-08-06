@@ -21,7 +21,7 @@ export default async function AdminProductsPage() {
         <div>
           <h2 className="font-serif text-2xl font-semibold">Products</h2>
           <p className="text-sm text-muted-foreground">
-            {products.filter((p) => p.stock <= 5 && p.active).length} low-stock items need attention.
+            {products.filter((p) => p.active && p.stock <= (p.minStock ?? 5)).length} low-stock items need attention.
           </p>
         </div>
         <ProductForm />
@@ -57,9 +57,10 @@ export default async function AdminProductsPage() {
                     <td className="px-5 py-3.5 capitalize text-muted-foreground">{p.category.toLowerCase().replace(/_/g, " ")}</td>
                     <td className="px-5 py-3.5 font-medium">{formatZAR(p.price)}</td>
                     <td className="px-5 py-3.5">
-                      <Badge variant="outline" className={p.stock <= 5 ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
+                      <Badge variant="outline" className={p.stock <= (p.minStock ?? 5) ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
                         {p.stock} left
                       </Badge>
+                      <span className="ml-1 text-[11px] text-muted-foreground">min {p.minStock ?? 5}</span>
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground">{p.rating ? `${p.rating.toFixed(1)} ★` : "—"}</td>
                     <td className="px-5 py-3.5">
@@ -77,6 +78,9 @@ export default async function AdminProductsPage() {
                             category: p.category,
                             price: p.price,
                             compareAtPrice: p.compareAtPrice,
+                            costPrice: p.costPrice,
+                            supplier: p.supplier,
+                            minStock: p.minStock,
                             stock: p.stock,
                             featured: p.featured,
                             active: p.active,

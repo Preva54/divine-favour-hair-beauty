@@ -57,6 +57,7 @@ interface WizardProps {
   services: WizardService[];
   stylists: WizardStylist[];
   initialServiceId?: string | null;
+  initialStylistId?: string | null;
   initialName?: string;
   initialEmail?: string;
   initialPhone?: string;
@@ -94,6 +95,7 @@ export function BookingWizard({
   services,
   stylists,
   initialServiceId,
+  initialStylistId = null,
   initialName = "",
   initialEmail = "",
   initialPhone = "",
@@ -101,7 +103,11 @@ export function BookingWizard({
   const [step, setStep] = useState<Step>("service");
   const [category, setCategory] = useState<string>("all");
   const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
-  const [stylistId, setStylistId] = useState<string | null>(null);
+  const [stylistId, setStylistId] = useState<string | null>(() =>
+    initialStylistId && (!initialServiceId || stylists.find((st) => st.id === initialStylistId)?.serviceIds.includes(initialServiceId))
+      ? initialStylistId
+      : null
+  );
   const [date, setDate] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [slots, setSlots] = useState<string[]>([]);
@@ -119,6 +125,11 @@ export function BookingWizard({
     const capable = stylists.filter((st) => st.serviceIds.includes(service.id));
     return capable.length > 0 ? capable : stylists;
   }, [service, stylists]);
+
+  const preselectNote = useMemo(() => {
+    if (!stylistId) return null;
+    return stylists.find((st) => st.id === stylistId) ?? null;
+  }, [stylistId, stylists]);
 
   const filteredServices = useMemo(
     () => (category === "all" ? services : services.filter((s) => s.category === category)),
@@ -239,10 +250,16 @@ export function BookingWizard({
                 category={category}
                 setCategory={setCategory}
                 selected={serviceId}
+                preselect={preselectNote}
                 onSelect={(id) => {
                   setServiceId(id);
-                  setStylistId(null);
-                  go("stylist");
+                  if (preselectNote?.serviceIds.includes(id)) {
+                    setStylistId(preselectNote.id);
+                    go("datetime");
+                  } else {
+                    setStylistId(null);
+                    go("stylist");
+                  }
                 }}
               />
             )}
@@ -312,12 +329,14 @@ function ServiceStep({
   category,
   setCategory,
   selected,
+  preselect,
   onSelect,
 }: {
   services: WizardService[];
   category: string;
   setCategory: (c: string) => void;
   selected: string | null;
+  preselect: WizardStylist | null;
   onSelect: (id: string) => void;
 }) {
   const cats = ["all", "HAIR", "NAILS", "BEAUTY"] as const;
@@ -328,6 +347,17 @@ function ServiceStep({
         title="Choose your treatment"
         subtitle="Pick a service to begin — you can choose a specialist next."
       />
+      {preselect && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-rose/10 p-4">
+          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
+            <Image src={preselect.image} alt={preselect.name} fill sizes="44px" className="object-cover" />
+          </span>
+          <p className="text-sm text-ink">
+            You&apos;ll be booking with <span className="font-semibold">{preselect.name}</span> ({preselect.title}) —
+            pick a service below to continue.
+          </p>
+        </div>
+      )}
       <div className="mb-6 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button

@@ -36,7 +36,21 @@ const stylistSchema = z.object({
   yearsExperience: z.coerce.number().int().min(0).max(60),
   rating: z.coerce.number().min(0).max(5).default(5),
   specialties: z.string().optional(),
+  phone: z.string().max(20).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  commissionRate: z.coerce.number().min(0).max(100).default(0),
 });
+
+const WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function parseSchedule(fd: FormData) {
+  return WEEKDAY_NAMES.map((_, day) => ({
+    day,
+    open: str(fd, `sd-${day}-open`) || "09:00",
+    close: str(fd, `sd-${day}-close`) || "17:00",
+    closed: checkbox(fd, `sd-${day}-closed`),
+  }));
+}
 
 export async function saveStylistAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("stylists:manage");
@@ -49,10 +63,17 @@ export async function saveStylistAction(formData: FormData): Promise<ActionResul
     yearsExperience: number(formData, "yearsExperience"),
     rating: str(formData, "rating") === "" ? 5 : Number(formData.get("rating")),
     specialties: str(formData, "specialties"),
+    phone: str(formData, "phone"),
+    email: str(formData, "email"),
+    commissionRate: str(formData, "commissionRate") === "" ? 0 : Number(formData.get("commissionRate")),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid details" };
 
-  const { id, name, title, bio, image, yearsExperience, rating, specialties } = parsed.data;
+  const { id, name, title, bio, image, yearsExperience, rating, specialties, phone, email, commissionRate } = parsed.data;
+  const serviceIds = formData
+    .getAll("serviceIds")
+    .map(String)
+    .filter((s) => s.length > 0);
   const data = {
     name,
     title,
@@ -61,21 +82,38 @@ export async function saveStylistAction(formData: FormData): Promise<ActionResul
     yearsExperience,
     rating,
     specialties: toTags(specialties ?? ""),
+    phone: phone || null,
+    email: email || null,
+    commissionRate,
     featured: checkbox(formData, "featured"),
     available: checkbox(formData, "available"),
   };
 
   try {
     if (id) {
-      await prisma.stylist.update({ where: { id }, data });
+      await prisma.stylist.update({
+        where: { id },
+        data: {
+          ...data,
+          services: { set: serviceIds.map((serviceId) => ({ id: serviceId })) },
+          schedule: { deleteMany: {}, create: parseSchedule(formData) },
+        },
+      });
     } else {
-      await prisma.stylist.create({ data });
+      await prisma.stylist.create({
+        data: {
+          ...data,
+          services: { connect: serviceIds.map((serviceId) => ({ id: serviceId })) },
+          schedule: { create: parseSchedule(formData) },
+        },
+      });
     }
   } catch {
     return { error: "Could not save stylist" };
   }
   revalidatePath("/admin/stylists");
   revalidatePath("/team");
+  revalidatePath("/booking");
   return { ok: true };
 }
 
@@ -317,6 +355,9 @@ const productSchema = z.object({
   category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
   price: z.coerce.number().positive("Price must be positive"),
   compareAtPrice: z.coerce.number().min(0).optional(),
+  costPrice: z.coerce.number().min(0).optional(),
+  supplier: z.string().optional(),
+  minStock: z.coerce.number().int().min(0).max(9999).optional(),
   stock: z.coerce.number().int().min(0).max(9999),
 });
 
@@ -331,11 +372,14 @@ export async function saveProductAction(formData: FormData): Promise<ActionResul
     category: str(formData, "category"),
     price: Number(formData.get("price")),
     compareAtPrice: str(formData, "compareAtPrice") === "" ? undefined : Number(formData.get("compareAtPrice")),
+    costPrice: str(formData, "costPrice") === "" ? undefined : Number(formData.get("costPrice")),
+    supplier: str(formData, "supplier") || undefined,
+    minStock: str(formData, "minStock") === "" ? undefined : number(formData, "minStock"),
     stock: number(formData, "stock"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid details" };
 
-  const { id, name, slug, description, image, category, price, compareAtPrice, stock } = parsed.data;
+  const { id, name, slug, description, image, category, price, compareAtPrice, costPrice, supplier, minStock, stock } = parsed.data;
   const finalSlug = slugify(slug ?? name);
   if (!finalSlug) return { error: "Slug could not be generated" };
 
@@ -347,6 +391,9 @@ export async function saveProductAction(formData: FormData): Promise<ActionResul
     category: category as never,
     price,
     compareAtPrice,
+    costPrice: costPrice ?? null,
+    supplier: supplier ?? null,
+    minStock,
     stock,
     featured: checkbox(formData, "featured"),
     active: checkbox(formData, "active"),
