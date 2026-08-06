@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ShieldCheck, Truck } from "lucide-react";
+import { ChevronRight, Flame, MessageCircle, ShieldCheck, Truck } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { formatZAR } from "@/lib/utils";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/constants";
@@ -42,13 +42,25 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     { icon: ShieldCheck, title: "Easy returns", text: "Unopened items refundable within 14 days." },
   ];
 
+  const productUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/shop/${product.slug}`;
+  const shareText = `${product.name} — ${formatZAR(product.price)} at Divine Favour Hair & Beauty`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} — ${productUrl}`)}`;
+
   return (
     <>
       <div className="pt-[74px]">
         <div className="container-lux py-6">
-          <Link href="/shop" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-rose">
-            <ArrowLeft className="h-4 w-4" /> All Products
-          </Link>
+          <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+            <Link href="/" className="transition hover:text-rose">Home</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href="/shop" className="transition hover:text-rose">Shop</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href={`/shop?category=${product.category.toLowerCase()}`} className="transition hover:text-rose">
+              {PRODUCT_CATEGORY_LABELS[product.category]}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="font-medium text-ink">{product.name}</span>
+          </nav>
         </div>
       </div>
 
@@ -77,7 +89,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
           <p className="mt-1 text-sm">
             {product.stock > 0 ? (
-              <span className="font-medium text-emerald-600">In stock · {product.stock} available</span>
+              product.stock <= 5 ? (
+                <span className="inline-flex items-center gap-1.5 font-medium text-rose">
+                  <Flame className="h-4 w-4" /> Only {product.stock} left — order soon!
+                </span>
+              ) : (
+                <span className="font-medium text-emerald-600">In stock · {product.stock} available</span>
+              )
             ) : (
               <span className="font-medium text-rose">Sold out — check back soon</span>
             )}
@@ -86,6 +104,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <p className="mt-6 leading-relaxed text-muted-foreground">{product.description}</p>
 
           <AddToCart product={product} />
+
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-700 transition hover:text-emerald-600 hover:underline"
+          >
+            <MessageCircle className="h-4 w-4" /> Share this product on WhatsApp
+          </a>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             {badges.map((b) => (

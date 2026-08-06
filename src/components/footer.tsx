@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/brand-icons";
 import { SALON } from "@/lib/constants";
+import { subscribeNewsletterAction } from "@/lib/actions/newsletter";
 
 const QUICK_LINKS = [
   { label: "Home", href: "/" },
@@ -37,10 +38,17 @@ const HOURS = [
 
 export function Footer() {
   const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
 
-  const subscribe = (e: React.FormEvent) => {
+  const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@")) return;
+    setSubscribing(true);
+    const res = await subscribeNewsletterAction({ email });
+    setSubscribing(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
     toast.success("Welcome to the Divine Favour family!", {
       description: "You're subscribed to exclusive offers and beauty tips.",
     });
@@ -163,8 +171,8 @@ export function Footer() {
               placeholder="Your email address"
               className="h-12 border-white/15 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-rose"
             />
-            <Button type="submit" variant="gold" className="h-12 shrink-0">
-              Subscribe
+            <Button type="submit" variant="gold" className="h-12 shrink-0" disabled={subscribing}>
+              {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Subscribe"}
             </Button>
           </form>
         </div>

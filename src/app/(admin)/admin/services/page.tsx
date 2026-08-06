@@ -2,21 +2,42 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { formatZAR } from "@/lib/utils";
 import { ActiveToggle } from "@/components/admin/active-toggle";
+import { ServiceForm, type ServiceFormData } from "@/components/admin/service-form";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Admin · Services" };
 
 export default async function AdminServicesPage() {
-  await requirePermission("services:view");
+  const session = await requirePermission("services:view");
+  const canManage = await prisma.rolePermission.count({
+    where: { role: session.user.role, permission: "services:manage" },
+  });
   const services = await prisma.service.findMany({ orderBy: [{ category: "asc" }, { price: "asc" }] });
+
+  const toForm = (s: (typeof services)[number]): ServiceFormData => ({
+    id: s.id,
+    name: s.name,
+    slug: s.slug,
+    description: s.description,
+    image: s.image,
+    category: s.category,
+    price: s.price,
+    durationMinutes: s.durationMinutes,
+    popular: s.popular,
+    featured: s.featured,
+    active: s.active,
+  });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl font-semibold">Services</h2>
-        <p className="text-sm text-muted-foreground">
-          {services.length} services in the menu — toggle visibility to feature them on the site.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold">Services</h2>
+          <p className="text-sm text-muted-foreground">
+            {services.length} services in the menu — manage pricing, durations and visibility.
+          </p>
+        </div>
+        {canManage > 0 && <ServiceForm />}
       </div>
 
       <Card>
@@ -31,6 +52,7 @@ export default async function AdminServicesPage() {
                   <th className="px-5 py-3.5 font-semibold">Price</th>
                   <th className="px-5 py-3.5 font-semibold">Popular</th>
                   <th className="px-5 py-3.5 font-semibold">Visible</th>
+                  {canManage > 0 && <th className="px-5 py-3.5 font-semibold">Edit</th>}
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -44,6 +66,11 @@ export default async function AdminServicesPage() {
                     <td className="px-5 py-3.5">
                       <ActiveToggle kind="service" id={s.id} active={s.active} label={s.name} />
                     </td>
+                    {canManage > 0 && (
+                      <td className="px-5 py-3.5">
+                        <ServiceForm service={toForm(s)} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

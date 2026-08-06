@@ -12,25 +12,28 @@ import {
   PartyPopper,
   Plus,
   ShoppingBag,
+  Sparkles,
   Tag,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatZAR } from "@/lib/utils";
+import { SALON } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/components/cart-provider";
-import { createOrderAction, validateCouponAction } from "@/lib/actions/orders";
+import { createOrderAction, validateCouponAction, validatePointsAction } from "@/lib/actions/orders";
 
 interface Props {
   initialName?: string;
   initialEmail?: string;
   signedIn: boolean;
+  pointsBalance?: number;
 }
 
-export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: Props) {
+export function CheckoutForm({ initialName = "", initialEmail = "", signedIn, pointsBalance = 0 }: Props) {
   const { items, subtotal, setQty, remove, clear } = useCart();
 
   const [form, setForm] = useState({
@@ -45,11 +48,13 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
   const [pay, setPay] = useState<"PAY_AT_SALON" | "CARD">("PAY_AT_SALON");
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
+  const [pointsInput, setPointsInput] = useState("");
+  const [points, setPoints] = useState<{ used: number; discount: number; balance: number } | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ ref: string; total: number; subtotal: number; discount: number } | null>(null);
 
-  const discount = coupon?.discount ?? 0;
+  const discount = (coupon?.discount ?? 0) + (points?.discount ?? 0);
   const total = Math.max(0, subtotal - discount);
 
   const canSubmit =
@@ -75,6 +80,24 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
     toast.success(`${couponInput.trim().toUpperCase()} applied`);
   }
 
+  async function applyPoints() {
+    const value = Number(pointsInput);
+    if (!Number.isInteger(value) || value < 1) {
+      toast.error("Enter a valid number of points.");
+      return;
+    }
+    setChecking(true);
+    const res = await validatePointsAction(value);
+    setChecking(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      setPoints(null);
+      return;
+    }
+    setPoints({ used: res.used, discount: res.discount, balance: res.balance });
+    toast.success(`${res.used} points applied — ${formatZAR(res.discount)} off`);
+  }
+
   async function placeOrder() {
     if (!canSubmit) {
       toast.error("Please fill in all required fields.");
@@ -84,6 +107,7 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
     const res = await createOrderAction({
       items: items.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       coupon: coupon?.code,
+      pointsToRedeem: points?.used,
       fullName: form.fullName,
       email: form.email,
       phone: form.phone,
@@ -98,8 +122,12 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
       toast.error(res.error);
       return;
     }
-    setDone({ ref: res.ref, total: res.total, subtotal: res.subtotal, discount: res.discount });
     clear();
+    if (res.paymentUrl) {
+      window.location.href = res.paymentUrl;
+      return;
+    }
+    setDone({ ref: res.ref, total: res.total, subtotal: res.subtotal, discount: res.discount });
   }
 
   if (done) {
@@ -249,7 +277,7 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
               <CreditCard className="h-5 w-5 text-rose" />
               <span className="font-semibold">Card online</span>
               <span className="text-xs text-muted-foreground">
-                {pay === "CARD" ? "Sandbox demo — no real charge (PayFast/Stripe to be wired)." : "Secure card checkout via PayFast."}
+                Secure checkout via PayFast — Visa, Mastercard, instant EFT & more.
               </span>
             </button>
           </div>
@@ -265,7 +293,9 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
           </div>
           {discount > 0 && (
             <div className="flex items-center justify-between text-emerald-600">
-              <span>Coupon ({coupon?.label})</span>
+              <span>
+                {coupon && points ? `Coupon + points` : coupon ? `Coupon (${coupon.label})` : points ? "Loyalty points" : ""}
+              </span>
               <span>-{formatZAR(discount)}</span>
             </div>
           )}
@@ -288,12 +318,51 @@ export function CheckoutForm({ initialName = "", initialEmail = "", signedIn }: 
           )}
         </div>
 
+        {signedIn && pointsBalance > 0 && (
+          <div className="mt-6 rounded-2xl border border-gold/30 bg-gold/5 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-gold" /> Loyalty points
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              You have <span className="font-bold text-ink">{pointsBalance.toLocaleString()}</span> points —{" "}
+              {SALON.pointsRedeemRate} points = {formatZAR(1)} off.
+            </p>
+            {points ? (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-emerald-600">
+                  {points.used.toLocaleString()} points applied · -{formatZAR(points.discount)}
+                </p>
+                <Button variant="ghost" size="sm" onClick={() => { setPoints(null); setPointsInput(""); }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-3 flex gap-2">
+                <Input
+                  value={pointsInput}
+                  onChange={(e) => setPointsInput(e.target.value)}
+                  placeholder={`Points (max ${pointsBalance})`}
+                  inputMode="numeric"
+                  type="number"
+                  min={1}
+                  max={pointsBalance}
+                />
+                <Button variant="outline" onClick={applyPoints} disabled={checking || !pointsInput.trim()}>
+                  {checking ? "…" : "Apply"}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         <Button variant="dark" size="lg" className="mt-6 w-full" onClick={placeOrder} disabled={submitting || !canSubmit}>
-          {submitting ? "Placing order…" : "Place order"} <ArrowRight className="h-4 w-4" />
+          {submitting ? "Placing order…" : pay === "CARD" ? "Continue to payment" : "Place order"} <ArrowRight className="h-4 w-4" />
         </Button>
         <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
           <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Payments are being set up in sandbox mode. No real charge is made during this demo.
+          {pay === "CARD"
+            ? "You'll be taken to PayFast's secure gateway to complete payment. We never see your card details."
+            : "Pay with cash or card when you collect — no charge today."}
         </p>
       </aside>
     </div>

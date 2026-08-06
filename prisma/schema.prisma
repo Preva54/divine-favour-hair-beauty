@@ -474,3 +474,12 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("footer")
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_subscribers")
+}

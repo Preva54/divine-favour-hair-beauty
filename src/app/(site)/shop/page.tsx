@@ -9,7 +9,12 @@ export const metadata: Metadata = {
     "Shop premium hair products, oils, wigs, extensions, makeup and skincare from Divine Favour Hair & Beauty.",
 };
 
-export default async function ShopPage() {
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const sp = await searchParams;
   const products = await prisma.product.findMany({
     where: { active: true },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
@@ -37,7 +42,7 @@ export default async function ShopPage() {
 
       <section className="section-pad">
         <div className="container-lux">
-          <ShopGrid products={products} />
+          <ShopGrid products={products} initialCategory={sp.category ?? "all"} />
         </div>
       </section>
     </>

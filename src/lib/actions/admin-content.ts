@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { slugify } from "@/lib/utils";
-import { BlogCategory, CouponType, GalleryCategory, ProductCategory, Role } from "@/generated/prisma/enums";
+import { BlogCategory, Category, CouponType, GalleryCategory, ProductCategory, Role } from "@/generated/prisma/enums";
 
 type ActionResult = { error?: string; ok?: boolean };
 
@@ -13,6 +13,7 @@ const BLOG_CATEGORIES = Object.values(BlogCategory);
 const GALLERY_CATEGORIES = Object.values(GalleryCategory);
 const COUPON_TYPES = Object.values(CouponType);
 const ROLES = Object.values(Role);
+const SERVICE_CATEGORIES = Object.values(Category);
 
 const checkbox = (fd: FormData, key: string) => fd.get(key) === "on";
 const number = (fd: FormData, key: string) => Number(fd.get(key) ?? 0);
@@ -107,6 +108,78 @@ export async function toggleStylistAvailableAction(id: string): Promise<ActionRe
   await prisma.stylist.update({ where: { id }, data: { available: !stylist.available } });
   revalidatePath("/admin/stylists");
   revalidatePath("/team");
+  return { ok: true };
+}
+
+/* ---------------- Services ---------------- */
+
+const serviceSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2, "Name is required"),
+  slug: z.string().optional(),
+  description: z.string().min(10, "Description needs at least 10 characters"),
+  image: z.string().min(1, "Image is required"),
+  category: z.enum(SERVICE_CATEGORIES as [string, ...string[]]),
+  price: z.coerce.number().positive("Price must be positive"),
+  durationMinutes: z.coerce.number().int().min(5, "Duration must be at least 5 minutes").max(600),
+});
+
+export async function saveServiceAction(formData: FormData): Promise<ActionResult> {
+  await requirePermission("services:manage");
+  const parsed = serviceSchema.safeParse({
+    id: str(formData, "id") || undefined,
+    name: str(formData, "name"),
+    slug: str(formData, "slug"),
+    description: str(formData, "description"),
+    image: str(formData, "image"),
+    category: str(formData, "category"),
+    price: Number(formData.get("price")),
+    durationMinutes: number(formData, "durationMinutes"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid details" };
+
+  const { id, name, slug, description, image, category, price, durationMinutes } = parsed.data;
+  const finalSlug = slugify(slug ?? name);
+  if (!finalSlug) return { error: "Slug could not be generated" };
+
+  const data = {
+    name,
+    slug: finalSlug,
+    description,
+    image,
+    category: category as never,
+    price,
+    durationMinutes,
+    popular: checkbox(formData, "popular"),
+    featured: checkbox(formData, "featured"),
+    active: checkbox(formData, "active"),
+  };
+
+  try {
+    if (id) {
+      await prisma.service.update({ where: { id }, data });
+    } else {
+      await prisma.service.create({ data });
+    }
+  } catch {
+    return { error: "A service with that slug already exists" };
+  }
+  revalidatePath("/admin/services");
+  revalidatePath("/services");
+  revalidatePath("/booking");
+  return { ok: true };
+}
+
+export async function deleteServiceAction(id: string): Promise<ActionResult> {
+  await requirePermission("services:manage");
+  try {
+    await prisma.service.delete({ where: { id } });
+  } catch {
+    return { error: "Service has appointments and cannot be deleted — deactivate it instead" };
+  }
+  revalidatePath("/admin/services");
+  revalidatePath("/services");
+  revalidatePath("/booking");
   return { ok: true };
 }
 

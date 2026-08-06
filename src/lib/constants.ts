@@ -16,6 +16,7 @@ export const SALON = {
   mapLink: "https://www.google.com/maps/search/?api=1&query=1066+Dariek+Street+South+Africa",
   depositPercent: 0.2,
   pointsPerRand: 1,
+  pointsRedeemRate: 2,
   welcomePoints: 250,
   referralPoints: 100,
 } as const;

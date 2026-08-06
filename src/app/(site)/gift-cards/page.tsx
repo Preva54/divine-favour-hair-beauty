@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, BadgePercent, CalendarHeart, Gift, Send, Sparkles, Wallet } from "lucide-react";
+import { BadgePercent, CalendarHeart, Gift, Send, Sparkles, Wallet } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { GiftCardForm } from "@/components/gift-card-form";
 
 export const metadata: Metadata = {
   title: "Gift Cards",
@@ -13,7 +12,7 @@ const DENOMS = [250, 500, 750, 1000];
 
 const STEPS = [
   { icon: Send, t: "Pick a design & amount", d: "Choose from R250 up — plus a personal message." },
-  { icon: Wallet, t: "We deliver instantly", d: "Emailed to your loved one the moment it's paid for." },
+  { icon: Wallet, t: "You get the code instantly", d: "Shared right after purchase and saved to your account." },
   { icon: Sparkles, t: "They redeem in salon", d: "Treatments, products, anything on their wishlist." },
 ];
 
@@ -61,33 +60,25 @@ export default async function GiftCardsPage() {
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-gold/30 bg-gradient-to-br from-ink via-[#2a1518] to-ink p-8 text-white shadow-lux md:p-10">
-            <p className="eyebrow mb-2 text-gold">How it works</p>
-            <h3 className="font-serif text-2xl font-semibold">Three easy steps</h3>
-            <div className="mt-8 space-y-6">
-              {STEPS.map((s, i) => (
-                <div key={s.t} className="flex gap-5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-gold/40 bg-gold/10">
-                    <s.icon className="h-5 w-5 text-gold" />
-                  </span>
-                  <div>
-                    <p className="font-semibold">{s.t}</p>
-                    <p className="mt-1 text-sm text-white/60">{s.d}</p>
-                  </div>
-                  <span className="ml-auto font-serif text-2xl font-bold text-white/15">{i + 1}</span>
+          <GiftCardForm signedIn={!!session?.user} />
+        </div>
+      </section>
+
+      <section className="section-pad pt-0">
+        <div className="container-lux">
+          <p className="eyebrow mb-3 text-center">How it works</p>
+          <h2 className="text-center font-serif text-3xl font-semibold">Three easy steps</h2>
+          <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <div key={s.t} className="relative rounded-3xl border bg-white p-7 text-center shadow-soft">
+                <span className="absolute top-4 right-6 font-serif text-4xl font-bold text-ink/5">{i + 1}</span>
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/15">
+                  <s.icon className="h-6 w-6 text-gold" />
                 </div>
-              ))}
-            </div>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Button asChild variant="gold" size="lg">
-                <Link href={session ? "/account/gift-cards" : "/register"}>
-                  {session ? "Buy a gift card" : "Sign in to buy"} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white hover:text-ink">
-                <Link href="/shop">Shop instead</Link>
-              </Button>
-            </div>
+                <h3 className="font-serif text-xl font-semibold">{s.t}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

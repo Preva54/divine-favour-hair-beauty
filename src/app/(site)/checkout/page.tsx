@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { CheckoutForm } from "./checkout-form";
 
 export const metadata: Metadata = {
@@ -9,6 +10,10 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const session = await auth();
+  const userId = session?.user?.id;
+  const user = userId
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { points: true } })
+    : null;
 
   return (
     <div className="pt-[74px]">
@@ -19,6 +24,7 @@ export default async function CheckoutPage() {
           initialName={session?.user?.name ?? undefined}
           initialEmail={session?.user?.email ?? undefined}
           signedIn={!!session?.user}
+          pointsBalance={user?.points ?? 0}
         />
       </div>
     </div>

@@ -13,6 +13,7 @@ import {
   Gift,
   Images,
   LayoutDashboard,
+  MailPlus,
   MessageSquare,
   Package,
   Scissors,
@@ -58,7 +59,10 @@ const SECTIONS: { title?: string; items: NavItem[] }[] = [
   },
   {
     title: "Inbox",
-    items: [{ href: "/admin/messages", label: "Messages", icon: MessageSquare, permission: "messages:view" }],
+    items: [
+      { href: "/admin/messages", label: "Messages", icon: MessageSquare, permission: "messages:view" },
+      { href: "/admin/newsletter", label: "Newsletter", icon: MailPlus, permission: "messages:view" },
+    ],
   },
   {
     title: "Customers",

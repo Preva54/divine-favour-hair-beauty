@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { randomRef } from "@/lib/utils";
 import { SALON } from "@/lib/constants";
+import { buildPayfastUrl, payfastConfigured } from "@/lib/payfast";
 import {
   CouponType,
   LoyaltyType,
@@ -21,6 +22,7 @@ const orderSchema = z.object({
     .min(1)
     .max(50),
   coupon: z.string().trim().toUpperCase().optional(),
+  pointsToRedeem: z.number().int().min(0).max(100000).optional(),
   fullName: z.string().trim().min(2).max(80),
   email: z.string().trim().toLowerCase().email(),
   phone: z.string().trim().min(7).max(20),
@@ -38,6 +40,8 @@ export type OrderResult =
       total: number;
       subtotal: number;
       discount: number;
+      pointsUsed?: number;
+      paymentUrl?: string;
     }
   | { ok: false; error: string };
 
@@ -59,6 +63,28 @@ export async function validateCouponAction(
   discount = Math.round(Math.min(discount, subtotal));
   const label = coupon.type === CouponType.PERCENT ? `${coupon.value}% off` : `${Math.round(coupon.value)} ZAR off`;
   return { ok: true, discount, label };
+}
+
+export async function validatePointsAction(
+  points: number,
+): Promise<{ ok: true; discount: number; balance: number; used: number } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false, error: "Sign in to redeem points." };
+  if (!Number.isInteger(points) || points < 1) return { ok: false, error: "Enter a valid number of points." };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { points: true },
+  });
+  if (!user) return { ok: false, error: "Account not found." };
+  if (points > user.points) {
+    return { ok: false, error: `You only have ${user.points} points.` };
+  }
+  const discount = Math.floor(points / SALON.pointsRedeemRate);
+  if (discount < 1) {
+    return { ok: false, error: `A minimum of ${SALON.pointsRedeemRate} points is needed to redeem.` };
+  }
+  return { ok: true, discount, balance: user.points, used: points };
 }
 
 export async function createOrderAction(input: unknown): Promise<OrderResult> {
@@ -106,10 +132,26 @@ export async function createOrderAction(input: unknown): Promise<OrderResult> {
     couponCode = coupon.code;
   }
 
-  const total = Math.round(subtotal - discount);
   const ref = randomRef("DF");
   const session = await auth();
   const userId = session?.user?.id ?? null;
+
+  let pointsUsed = 0;
+  const points = d.pointsToRedeem ?? 0;
+  let pointsDiscount = 0;
+  if (points > 0) {
+    if (!userId) return { ok: false, error: "Sign in to redeem loyalty points." };
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { points: true } });
+    if (!user) return { ok: false, error: "Account not found." };
+    if (points > user.points) return { ok: false, error: `You only have ${user.points} points.` };
+    pointsUsed = Math.min(points, Math.max(0, subtotal - discount) * SALON.pointsRedeemRate);
+    pointsDiscount = Math.floor(pointsUsed / SALON.pointsRedeemRate);
+    if (pointsDiscount < 1) return { ok: false, error: `A minimum of ${SALON.pointsRedeemRate} points is needed to redeem.` };
+    pointsUsed = pointsDiscount * SALON.pointsRedeemRate;
+  }
+
+  const total = Math.max(0, Math.round(subtotal - discount - pointsDiscount));
+  const combinedDiscount = Math.round(discount + pointsDiscount);
 
   await prisma.$transaction(async (tx) => {
     for (const item of d.items) {
@@ -121,6 +163,17 @@ export async function createOrderAction(input: unknown): Promise<OrderResult> {
     if (couponCode) {
       await tx.coupon.update({ where: { code: couponCode }, data: { usageCount: { increment: 1 } } });
     }
+    if (pointsUsed > 0 && userId) {
+      await tx.user.update({ where: { id: userId }, data: { points: { decrement: pointsUsed } } });
+      await tx.loyaltyTransaction.create({
+        data: {
+          userId,
+          points: -pointsUsed,
+          type: LoyaltyType.REDEEM,
+          description: `Checkout discount · Order ${ref}`,
+        },
+      });
+    }
     return tx.order.create({
       data: {
         ref,
@@ -129,7 +182,7 @@ export async function createOrderAction(input: unknown): Promise<OrderResult> {
         paymentMethod: d.paymentMethod as PaymentMethod,
         paymentStatus: PaymentStatus.UNPAID,
         subtotal,
-        discount,
+        discount: combinedDiscount,
         total,
         couponCode,
         fullName: d.fullName,
@@ -176,5 +229,20 @@ export async function createOrderAction(input: unknown): Promise<OrderResult> {
   revalidatePath("/shop");
   revalidatePath("/account/orders");
 
-  return { ok: true, ref, subtotal, discount, total };
+  if (d.paymentMethod === "CARD") {
+    if (!payfastConfigured) {
+      return { ok: false, error: "Card payments are not configured yet — please pay at the salon." };
+    }
+    const [first, ...rest] = d.fullName.trim().split(/\s+/);
+    const paymentUrl = buildPayfastUrl({
+      ref,
+      amount: total,
+      email: d.email,
+      firstName: first,
+      lastName: rest.join(" ").slice(0, 30),
+    });
+    return { ok: true, ref, subtotal, discount: combinedDiscount, total, pointsUsed, paymentUrl };
+  }
+
+  return { ok: true, ref, subtotal, discount: combinedDiscount, total, pointsUsed };
 }
