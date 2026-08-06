@@ -56,7 +56,11 @@ async function processITN(params: ITNParams) {
   }
 
   if (validation !== "VALID") {
-    return new NextResponse("NOT VALID", { status: 400 });
+    const strict = process.env.PAYFAST_SANDBOX !== "1";
+    if (strict) {
+      return new NextResponse("NOT VALID", { status: 400 });
+    }
+    console.warn(`[payfast:notify] external validation returned ${validation} — sandbox mode, processing signed ITN anyway`);
   }
 
   const ref = params.m_payment_id;
