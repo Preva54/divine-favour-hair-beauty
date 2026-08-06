@@ -58,7 +58,7 @@ export function Navbar({ session }: { session: Session | null }) {
     >
       <div className="container-lux flex h-[74px] items-center justify-between gap-4">
         <Link href="/" aria-label="Divine Favour Hair & Beauty home" className="shrink-0">
-          <Logo />
+          <Logo dark={!scrolled} />
         </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex">
