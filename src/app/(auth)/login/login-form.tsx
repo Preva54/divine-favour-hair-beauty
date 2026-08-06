@@ -56,7 +56,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link href="/contact" className="text-xs font-medium text-muted-foreground transition hover:text-rose">
+          <Link href="/forgot-password" className="text-xs font-medium text-muted-foreground transition hover:text-rose">
             Forgot password?
           </Link>
         </div>

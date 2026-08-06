@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { randomRef } from "@/lib/utils";
 import { SALON } from "@/lib/constants";
 import { buildPayfastUrl, payfastConfigured } from "@/lib/payfast";
+import { orderConfirmationHtml, sendEmail } from "@/lib/mailer";
 import {
   CouponType,
   LoyaltyType,
@@ -228,6 +229,22 @@ export async function createOrderAction(input: unknown): Promise<OrderResult> {
 
   revalidatePath("/shop");
   revalidatePath("/account/orders");
+
+  await sendEmail({
+    to: d.email,
+    subject: `Your order ${ref} was received`,
+    html: orderConfirmationHtml({
+      ref,
+      total,
+      address: `${d.address}, ${d.city} ${d.postalCode}`,
+      payment: d.paymentMethod === "CARD" ? "Card (PayFast)" : "Pay at salon",
+      items: d.items.map((i) => ({
+        name: byId.get(i.productId)!.name,
+        qty: i.quantity,
+        price: byId.get(i.productId)!.price,
+      })),
+    }),
+  });
 
   if (d.paymentMethod === "CARD") {
     if (!payfastConfigured) {

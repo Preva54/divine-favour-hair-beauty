@@ -1,11 +1,15 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "crypto";
 import { z } from "zod";
 import { Role } from "@/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { SALON } from "@/lib/constants";
+import { passwordResetHtml, sendEmail } from "@/lib/mailer";
+
+const RESET_TOKEN_MINUTES = 60;
 
 const registerSchema = z.object({
   name: z.string().min(2, "Please enter your full name"),
@@ -90,4 +94,73 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
 
   revalidatePath("/account");
   return { ok: true, redirect: "/login?registered=1" };
+}
+
+/* ---------------- Password reset ---------------- */
+
+const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+export type RequestResetResult =
+  | { ok: true; sent: boolean; devLink?: string }
+  | { ok: false; error: string };
+
+export async function requestPasswordResetAction(email: string): Promise<RequestResetResult> {
+  const parsed = z.string().trim().toLowerCase().email().safeParse(email);
+  if (!parsed.success) return { ok: false, error: "Please enter a valid email address." };
+
+  const user = await prisma.user.findUnique({ where: { email: parsed.data } });
+  if (!user?.passwordHash) {
+    // Don't reveal whether an account exists.
+    return { ok: true, sent: false };
+  }
+
+  const token = randomBytes(32).toString("hex");
+  await prisma.$transaction([
+    prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+    prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashToken(token),
+        expiresAt: new Date(Date.now() + RESET_TOKEN_MINUTES * 60_000),
+      },
+    }),
+  ]);
+
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const link = `${base}/reset-password?token=${token}`;
+  const res = await sendEmail({
+    to: user.email,
+    subject: "Reset your Divine Favour password",
+    html: passwordResetHtml({ name: user.name.split(" ")[0], link, minutes: RESET_TOKEN_MINUTES }),
+  });
+
+  if (!res.ok) return { ok: false, error: "Could not send the reset email. Please try again." };
+  if (!res.sent) return { ok: true, sent: false, devLink: link };
+  return { ok: true, sent: true };
+}
+
+export type ResetPasswordResult = { ok: true } | { ok: false; error: string };
+
+export async function resetPasswordAction(token: string, password: string): Promise<ResetPasswordResult> {
+  if (!token) return { ok: false, error: "Invalid or missing reset token." };
+  if (typeof password !== "string" || password.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+
+  const row = await prisma.passwordResetToken.findUnique({ where: { tokenHash: hashToken(token) } });
+  if (!row || row.usedAt || row.expiresAt < new Date()) {
+    return { ok: false, error: "This reset link is invalid or has expired. Please request a new one." };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { passwordHash } }),
+    prisma.passwordResetToken.update({ where: { id: row.id }, data: { usedAt: new Date() } }),
+  ]);
+
+  revalidatePath("/login");
+  return { ok: true };
 }

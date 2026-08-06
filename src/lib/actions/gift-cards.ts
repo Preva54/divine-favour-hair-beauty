@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { giftCardEmailHtml, sendEmail } from "@/lib/mailer";
 
 export type GiftCardResult =
   | { ok: true; code: string; amount: number; recipientEmail: string }
@@ -52,5 +53,19 @@ export async function purchaseGiftCardAction(input: unknown): Promise<GiftCardRe
   }
 
   revalidatePath("/account/gift-cards");
+
+  await sendEmail({
+    to: recipientEmail,
+    subject: `You've been gifted ${Math.round(amount)} ZAR of beauty!`,
+    html: giftCardEmailHtml({
+      amount,
+      code,
+      recipientName: recipientName || null,
+      senderName: sender.name,
+      message: message || null,
+      shopUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/shop`,
+    }),
+  });
+
   return { ok: true, code, amount, recipientEmail };
 }

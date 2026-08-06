@@ -7,6 +7,7 @@ import { formatDate, formatTime, formatZAR } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { CancelAppointment } from "./cancel-appointment";
+import { PayDeposit } from "./pay-deposit";
 
 export default async function AppointmentsPage() {
   const userId = await requireUser();
@@ -34,6 +35,15 @@ export default async function AppointmentsPage() {
         ) : (
           upcoming.map((a) => (
             <Row key={a.id} a={a}>
+              {a.paymentStatus === "UNPAID" && a.depositAmount && a.depositAmount > 0 ? (
+                <PayDeposit id={a.id} amount={a.depositAmount} />
+              ) : (
+                a.paymentStatus !== "UNPAID" && (
+                  <span className="text-xs font-semibold text-emerald-600">
+                    {a.paymentStatus === "DEPOSIT_PAID" ? "Deposit paid" : "Paid"}
+                  </span>
+                )
+              )}
               {a.status !== "COMPLETED" && <CancelAppointment id={a.id} code={a.ref} />}
             </Row>
           ))

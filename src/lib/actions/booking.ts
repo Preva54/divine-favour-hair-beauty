@@ -5,8 +5,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getAvailableSlots, pickStylist } from "@/lib/booking";
-import { addMinutes, randomRef } from "@/lib/utils";
+import { addMinutes, randomRef, formatDate, formatTime } from "@/lib/utils";
 import { SALON } from "@/lib/constants";
+import { bookingConfirmationHtml, sendEmail } from "@/lib/mailer";
+import { buildPayfastUrl, payfastConfigured } from "@/lib/payfast";
 import {
   AppointmentStatus,
   LoyaltyType,
@@ -107,6 +109,19 @@ export async function createAppointmentAction(input: unknown): Promise<CreateBoo
   revalidatePath("/booking");
   revalidatePath("/account/appointments");
 
+  await sendEmail({
+    to: user?.email ?? d.email,
+    subject: `Your ${service.name} booking (${ref})`,
+    html: bookingConfirmationHtml({
+      ref,
+      service: service.name,
+      stylist: stylist?.name ?? "assigned stylist",
+      date: formatDate(start),
+      time: formatTime(start),
+      price: service.price,
+    }),
+  });
+
   return {
     ok: true,
     ref,
@@ -114,4 +129,42 @@ export async function createAppointmentAction(input: unknown): Promise<CreateBoo
     stylistName: stylist?.name ?? "",
     start: `${d.date}T${d.time}`,
   };
+}
+
+/* ---------------- Deposit payment ---------------- */
+
+export type DepositResult =
+  | { ok: true; paymentUrl: string; amount: number }
+  | { ok: false; error: string };
+
+export async function createDepositPaymentAction(appointmentId: string): Promise<DepositResult> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return { ok: false, error: "Please sign in to pay your deposit." };
+  if (!payfastConfigured) {
+    return { ok: false, error: "Online deposits aren't enabled yet — settle the deposit at the salon." };
+  }
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    include: { service: true },
+  });
+  if (!appointment || appointment.userId !== userId) return { ok: false, error: "Appointment not found." };
+  if (appointment.status === "CANCELLED") return { ok: false, error: "This appointment was cancelled." };
+  if (appointment.paymentStatus !== "UNPAID") return { ok: false, error: "This appointment has already been paid for." };
+  if (!appointment.depositAmount || appointment.depositAmount <= 0) {
+    return { ok: false, error: "No deposit is required for this appointment." };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+  const nameParts = (user?.name ?? "Divine Favour").trim().split(/\s+/);
+  const paymentUrl = buildPayfastUrl({
+    ref: appointment.ref,
+    amount: appointment.depositAmount,
+    email: user?.email ?? "guest@divinefavour.co.za",
+    firstName: nameParts[0],
+    lastName: nameParts.slice(1).join(" ").slice(0, 30),
+  });
+
+  return { ok: true, paymentUrl, amount: appointment.depositAmount };
 }
