@@ -40,8 +40,9 @@ export function StatusSelect({
           const form = e.currentTarget.form;
           if (form) {
             const fd = new FormData(form);
+            fd.set("id", id);
             fd.set("status", e.target.value);
-startTransition(() => void ACTIONS[kind](fd));
+            startTransition(() => void ACTIONS[kind](fd));
           }
         }}
         className="rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium capitalize outline-none transition focus:border-rose disabled:opacity-60"
