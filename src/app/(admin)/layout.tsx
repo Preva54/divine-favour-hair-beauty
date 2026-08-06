@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getPermissions } from "@/lib/access";
+import { adminGuard, getPermissions } from "@/lib/access";
 import { Logo } from "@/components/logo";
 import { AdminNav } from "./admin-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await adminGuard();
   const permissions = await getPermissions();
 
   const [newMessages, unapprovedReviews, pendingBookings] = await Promise.all([
