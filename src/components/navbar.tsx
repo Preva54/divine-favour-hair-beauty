@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Calendar, Heart, LayoutDashboard, LogOut, Menu, ShieldCheck, ShoppingBag, UserRound } from "lucide-react";
+import { Calendar, Heart, LayoutDashboard, Menu, ShieldCheck, ShoppingBag, UserRound } from "lucide-react";
 import type { Session } from "next-auth";
 import { useCart } from "@/components/cart-provider";
 import { useWishlist } from "@/components/wishlist-provider";
 import { Logo } from "@/components/logo";
-import { signOutAction } from "@/lib/auth-actions";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -122,13 +122,9 @@ export function Navbar({ session }: { session: Session | null }) {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <form action={signOutAction}>
-                  <button type="submit" className="w-full">
-                    <DropdownMenuItem className="text-destructive">
-                      <LogOut className="h-4 w-4" /> Sign out
-                    </DropdownMenuItem>
-                  </button>
-                </form>
+                <DropdownMenuItem asChild>
+                  <SignOutButton className="w-full text-destructive" />
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

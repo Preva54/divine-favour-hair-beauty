@@ -2,13 +2,13 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adminGuard, getPermissions } from "@/lib/access";
 import { Logo } from "@/components/logo";
-import { signOutAction } from "@/lib/auth-actions";
+import { SignOutButton } from "@/components/sign-out-button";
 import { AdminNav } from "./admin-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPalette } from "@/components/admin/command-palette";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await adminGuard();
@@ -37,14 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/" className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Back to site
           </Link>
-          <form action={signOutAction} className="mt-2">
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-rose/20 hover:text-rose"
-            >
-              <LogOut className="h-4 w-4" /> Sign out
-            </button>
-          </form>
+          <SignOutButton className="mt-2 w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-rose/20 hover:text-rose" />
         </div>
       </aside>
 
