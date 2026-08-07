@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Award, BookOpen, Clock, Scissors } from "lucide-react";
@@ -8,6 +7,7 @@ import { formatZAR } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/star-rating";
+import { StylistAvatar } from "@/components/stylist-avatar";
 import { Stagger, StaggerItem, Reveal } from "@/components/motion/reveal";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -42,7 +42,7 @@ export default async function StylistDetailPage({ params }: { params: Promise<{ 
       <section className="container-lux grid gap-10 pb-16 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-14">
         <Reveal>
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] shadow-lux-lg">
-            <Image src={stylist.image} alt={stylist.name} fill priority sizes="(max-width: 1024px) 100vw, 420px" className="object-cover" />
+            <StylistAvatar name={stylist.name} image={stylist.image} initialsClassName="text-7xl" />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-white">
               <h1 className="font-serif text-3xl font-semibold">{stylist.name}</h1>

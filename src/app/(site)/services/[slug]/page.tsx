@@ -9,6 +9,7 @@ import { CATEGORY_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ServiceCard } from "@/components/cards/service-card";
+import { StylistAvatar } from "@/components/stylist-avatar";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -137,7 +138,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
                   className="group flex items-center gap-3 rounded-full border bg-white py-2 pr-5 pl-2 shadow-soft transition hover:-translate-y-0.5 hover:border-rose/40"
                 >
                   <span className="relative h-11 w-11 overflow-hidden rounded-full">
-                    <Image src={st.image} alt={st.name} fill sizes="44px" className="object-cover" />
+                    <StylistAvatar name={st.name} image={st.image} initialsClassName="text-sm" />
                   </span>
                   <span>
                     <span className="block text-sm font-semibold transition-colors group-hover:text-rose">{st.name}</span>

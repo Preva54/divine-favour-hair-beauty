@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { cn, formatZAR } from "@/lib/utils";
 import { bookableDates, dateKey } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { StylistAvatar } from "@/components/stylist-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -350,7 +351,7 @@ function ServiceStep({
       {preselect && (
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-rose/10 p-4">
           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
-            <Image src={preselect.image} alt={preselect.name} fill sizes="44px" className="object-cover" />
+            <StylistAvatar name={preselect.name} image={preselect.image} initialsClassName="text-sm" />
           </span>
           <p className="text-sm text-ink">
             You&apos;ll be booking with <span className="font-semibold">{preselect.name}</span> ({preselect.title}) —
@@ -475,7 +476,7 @@ function StylistStep({
               )}
             >
               <span className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-gold/40">
-                <Image src={st.image} alt={st.name} fill sizes="64px" className="object-cover" />
+                <StylistAvatar name={st.name} image={st.image} initialsClassName="text-xl" />
               </span>
               <span>
                 <span className="block font-serif text-base font-semibold">{st.name}</span>

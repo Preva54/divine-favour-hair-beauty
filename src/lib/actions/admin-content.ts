@@ -32,7 +32,7 @@ const stylistSchema = z.object({
   name: z.string().min(2, "Name is required"),
   title: z.string().min(2, "Title is required"),
   bio: z.string().min(10, "Bio needs at least 10 characters"),
-  image: z.string().min(1, "Image filename is required"),
+  image: z.string().optional().default(""),
   yearsExperience: z.coerce.number().int().min(0).max(60),
   rating: z.coerce.number().min(0).max(5).default(5),
   specialties: z.string().optional(),

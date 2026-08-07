@@ -123,8 +123,8 @@ export function StylistForm({
 
           <div className="grid gap-2 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label htmlFor="st-image">Image filename</Label>
-              <Input id="st-image" name="image" required defaultValue={stylist?.image} placeholder="stylist-1.jpg" />
+              <Label htmlFor="st-image">Photo (optional)</Label>
+              <Input id="st-image" name="image" defaultValue={stylist?.image} placeholder="stylist-1.jpg — blank shows initials" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="st-years">Years experience</Label>

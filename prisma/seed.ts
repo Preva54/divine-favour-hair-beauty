@@ -62,12 +62,12 @@ const serviceDefs = [
 ];
 
 const stylistDefs = [
-  { name: "Faith", title: "Senior Hair Stylist", years: 8, rating: 5.0, reviews: 198, image: "stylist-1.jpg", featured: true, commission: 40, bio: "Faith is our braiding queen — neat, fast and gentle with every install. From classic cornrows to elaborate knotless styles, she keeps natural hair healthy and protected.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles", "Twists", "Protective Styles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing", "hair-treatment"] },
-  { name: "Isaac", title: "Men's Grooming Specialist", years: 6, rating: 4.9, reviews: 176, image: "stylist-8.jpg", featured: true, commission: 35, bio: "Sharp fades, crisp line-ups and beard work done with precision. Isaac is the barber our regulars refuse to skip — book ahead, he fills up fast.", specialties: ["Men's Haircuts", "Skin Fades", "Beard Grooming", "Hair Styling"], services: ["mens-grooming", "hair-cut", "hair-washing"] },
-  { name: "Nathi", title: "Men's Grooming Specialist", years: 4, rating: 4.8, reviews: 122, image: "stylist-6.jpg", featured: false, commission: 35, bio: "Clean cuts, precise fades and gentle beard trims with a relaxed, friendly vibe. Nathi makes every client feel like the salon's favourite regular.", specialties: ["Haircuts", "Fades", "Beard Trims", "Styling"], services: ["mens-grooming", "hair-cut", "hair-washing"] },
-  { name: "Julia", title: "Hair Braiding Specialist", years: 7, rating: 5.0, reviews: 214, image: "stylist-3.jpg", featured: true, commission: 35, bio: "Julia's braids are famous for their neatness, symmetry and longevity. Kids love her gentle hands — mums love that the style lasts weeks.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing"] },
-  { name: "Felicia", title: "Professional Braider", years: 5, rating: 4.9, reviews: 143, image: "stylist-7.jpg", featured: false, commission: 35, bio: "Felicia specialises in protective styles that turn heads — box braids, Ghana twists and sleek cornrows, all installed with care for your edges.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing"] },
-  { name: "Fifi", title: "Nail Technician", years: 4, rating: 4.8, reviews: 167, image: "stylist-4.jpg", featured: true, commission: 30, bio: "From flawless acrylics to detailed hand-painted art, Fifi's nails are a work of art every time. Her gel sets are famous for lasting weeks without a lift.", specialties: ["Acrylic Nails", "Gel Nails", "Nail Art"], services: ["gel-nails", "acrylic-nails", "nail-art", "manicure", "french-tips"] },
+  { name: "Faith", title: "Senior Hair Stylist", years: 8, rating: 5.0, reviews: 198, image: "", featured: true, commission: 40, bio: "Faith is our braiding queen — neat, fast and gentle with every install. From classic cornrows to elaborate knotless styles, she keeps natural hair healthy and protected.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles", "Twists", "Protective Styles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing", "hair-treatment"] },
+  { name: "Isaac", title: "Men's Grooming Specialist", years: 6, rating: 4.9, reviews: 176, image: "", featured: true, commission: 35, bio: "Sharp fades, crisp line-ups and beard work done with precision. Isaac is the barber our regulars refuse to skip — book ahead, he fills up fast.", specialties: ["Men's Haircuts", "Skin Fades", "Beard Grooming", "Hair Styling"], services: ["mens-grooming", "hair-cut", "hair-washing"] },
+  { name: "Nathi", title: "Men's Grooming Specialist", years: 4, rating: 4.8, reviews: 122, image: "", featured: false, commission: 35, bio: "Clean cuts, precise fades and gentle beard trims with a relaxed, friendly vibe. Nathi makes every client feel like the salon's favourite regular.", specialties: ["Haircuts", "Fades", "Beard Trims", "Styling"], services: ["mens-grooming", "hair-cut", "hair-washing"] },
+  { name: "Julia", title: "Hair Braiding Specialist", years: 7, rating: 5.0, reviews: 214, image: "", featured: true, commission: 35, bio: "Julia's braids are famous for their neatness, symmetry and longevity. Kids love her gentle hands — mums love that the style lasts weeks.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing"] },
+  { name: "Felicia", title: "Professional Braider", years: 5, rating: 4.9, reviews: 143, image: "", featured: false, commission: 35, bio: "Felicia specialises in protective styles that turn heads — box braids, Ghana twists and sleek cornrows, all installed with care for your edges.", specialties: ["Braiding", "Cornrows", "Kids Hairstyles"], services: ["braiding", "cornrows", "kids-hair", "hair-washing"] },
+  { name: "Fifi", title: "Nail Technician", years: 4, rating: 4.8, reviews: 167, image: "", featured: true, commission: 30, bio: "From flawless acrylics to detailed hand-painted art, Fifi's nails are a work of art every time. Her gel sets are famous for lasting weeks without a lift.", specialties: ["Acrylic Nails", "Gel Nails", "Nail Art"], services: ["gel-nails", "acrylic-nails", "nail-art", "manicure", "french-tips"] },
 ];
 
 const scheduleDefs = [
@@ -208,7 +208,7 @@ async function main() {
         name: st.name,
         title: st.title,
         bio: st.bio,
-        image: img(st.image),
+        image: st.image,
         yearsExperience: st.years,
         rating: st.rating,
         reviewCount: st.reviews,

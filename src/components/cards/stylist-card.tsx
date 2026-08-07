@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Calendar, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StarRating } from "@/components/star-rating";
+import { StylistAvatar } from "@/components/stylist-avatar";
 
 export function StylistCard({
   stylist,
@@ -19,13 +19,7 @@ export function StylistCard({
     <div className="group block h-full">
       <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lux-lg">
         <Link href={`/team/${stylist.id}`} className="relative block h-80 overflow-hidden">
-          <Image
-            src={stylist.image}
-            alt={stylist.name}
-            fill
-            sizes="(max-width: 768px) 100vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+          <StylistAvatar name={stylist.name} image={stylist.image} />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 text-white">
             <div className="flex items-center gap-2">

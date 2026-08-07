@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/access";
 import { formatZAR } from "@/lib/utils";
@@ -11,12 +10,11 @@ import { ToggleButton } from "@/components/admin/toggle-button";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { StylistForm } from "@/components/admin/stylist-form";
 import { LeaveManager } from "@/components/admin/leave-manager";
+import { StylistAvatar } from "@/components/stylist-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Admin · Stylists" };
-
-const img = (u: string) => (u.startsWith("/") || u.startsWith("http") ? u : `/images/${u}`);
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -74,13 +72,9 @@ export default async function AdminStylistsPage() {
                     <tr key={st.id} className="align-top transition hover:bg-ivory/40">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <Image
-                            src={img(st.image)}
-                            alt={st.name}
-                            width={44}
-                            height={44}
-                            className="h-11 w-11 rounded-full object-cover"
-                          />
+                          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                            <StylistAvatar name={st.name} image={st.image} initialsClassName="text-sm" />
+                          </span>
                           <div className="min-w-0">
                             <p className="font-medium">{st.name}</p>
                             <p className="text-xs text-muted-foreground">{st.title}</p>
